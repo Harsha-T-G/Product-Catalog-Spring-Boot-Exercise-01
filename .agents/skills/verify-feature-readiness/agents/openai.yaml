@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify Feature Readiness"
+  short_description: "Confirm Product Catalog work meets spec and quality gates"
+  default_prompt: "Use $verify-feature-readiness before committing or opening a PR for this change."
