@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test-Driven Development"
+  short_description: "Red-green-refactor for Product Catalog behavior"
+  default_prompt: "Use $test-driven-development to implement this approved task with a failing test first."

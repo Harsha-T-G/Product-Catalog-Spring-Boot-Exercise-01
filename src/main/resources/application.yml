@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: Product Catalog API
+
+info:
+  app:
+    version: 1.0.0
