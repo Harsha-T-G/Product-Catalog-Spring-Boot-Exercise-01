@@ -40,6 +40,11 @@ public class ProductController {
         return ResponseEntity.ok(productService.findAll());
     }
 
+    @GetMapping("/low-stock")
+    public ResponseEntity<List<ProductResponse>> findLowStock() {
+        return ResponseEntity.ok(productService.findLowStock());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(productService.findById(id));

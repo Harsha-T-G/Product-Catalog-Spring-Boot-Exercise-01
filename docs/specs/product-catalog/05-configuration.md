@@ -1,6 +1,6 @@
 # Configuration and Profiles Contract
 
-**Status:** Draft — governed by `SPEC.md`  
+**Status:** Implemented — governed by `SPEC.md`  
 **Covers:** `REQ-070`–`REQ-080`, `AC-070`–`AC-075`
 
 ## Requirements

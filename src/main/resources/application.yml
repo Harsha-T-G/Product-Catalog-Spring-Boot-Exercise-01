@@ -2,6 +2,7 @@ spring:
   application:
     name: Product Catalog API
 
-info:
-  app:
-    version: 1.0.0
+catalog:
+  low-stock-threshold: 5
+  maximum-products: ${CATALOG_MAXIMUM_PRODUCTS:500}
+  default-category: General

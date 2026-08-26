@@ -38,6 +38,16 @@ public class GlobalExceptionHandler {
                 null);
     }
 
+    @ExceptionHandler(ProductLimitReachedException.class)
+    public ResponseEntity<ErrorResponse> handleProductLimitReached(
+            ProductLimitReachedException exception, HttpServletRequest request) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                request.getRequestURI(),
+                null);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(
             MethodArgumentNotValidException exception, HttpServletRequest request) {
