@@ -1,0 +1,157 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/Users/harsh01/.m2/wrapper/dists/apache-maven-3.9.11/a2d47e15/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+WARNING: Final field _cipher in class org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher has been mutated reflectively by class org.eclipse.sisu.bean.BeanPropertyField in unnamed module @78dd667e (file:/Users/harsh01/.m2/wrapper/dists/apache-maven-3.9.11/a2d47e15/lib/org.eclipse.sisu.inject-0.9.0.M4.jar)
+WARNING: Use --enable-final-field-mutation=ALL-UNNAMED to avoid a warning
+WARNING: Mutating final fields will be blocked in a future release unless final field mutation is enabled
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< com.codewalnut:product-catalog >-------------------
+[INFO] Building product-catalog 1.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.4.0:clean (default-clean) @ product-catalog ---
+[INFO] Deleting /Users/harsh01/TASKS/Task14-Product-Catalog/target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ product-catalog ---
+[INFO] Copying 3 resources from src/main/resources to target/classes
+[INFO] Copying 0 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ product-catalog ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 18 source files with javac [debug parameters release 21] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ product-catalog ---
+[INFO] skip non existing resourceDirectory /Users/harsh01/TASKS/Task14-Product-Catalog/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ product-catalog ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 8 source files with javac [debug parameters release 21] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ product-catalog ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.codewalnut.productcatalog.repository.InMemoryProductRepositoryTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.053 s -- in com.codewalnut.productcatalog.repository.InMemoryProductRepositoryTest
+[INFO] Running com.codewalnut.productcatalog.ActuatorEndpointTest
+10:36:46.697 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.codewalnut.productcatalog.ActuatorEndpointTest]: ActuatorEndpointTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+10:36:46.763 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.codewalnut.productcatalog.ProductCatalogApplication for test class com.codewalnut.productcatalog.ActuatorEndpointTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.2)
+
+2026-08-26T10:36:46.998+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.productcatalog.ActuatorEndpointTest  : Starting ActuatorEndpointTest using Java 26.0.1 with PID 12176 (started by harsh01 in /Users/harsh01/TASKS/Task14-Product-Catalog)
+2026-08-26T10:36:46.999+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.productcatalog.ActuatorEndpointTest  : No active profile set, falling back to 1 default profile: "default"
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.apache.tomcat.jni.Library in an unnamed module (file:/Users/harsh01/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.34/tomcat-embed-core-10.1.34.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+2026-08-26T10:36:47.893+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-08-26T10:36:47.893+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-08-26T10:36:47.901+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-08-26T10:36:47.907+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 14 ms
+2026-08-26T10:36:47.943+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.productcatalog.ActuatorEndpointTest  : Started ActuatorEndpointTest in 1.116 seconds (process running for 1.735)
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (/Users/harsh01/.m2/repository/net/bytebuddy/byte-buddy-agent/1.15.11/byte-buddy-agent-1.15.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.918 s -- in com.codewalnut.productcatalog.ActuatorEndpointTest
+[INFO] Running com.codewalnut.productcatalog.ProductIntegrationTest
+2026-08-26T10:36:48.523+05:30  INFO 12176 --- [Product Catalog API] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.codewalnut.productcatalog.ProductIntegrationTest]: ProductIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-08-26T10:36:48.525+05:30  INFO 12176 --- [Product Catalog API] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.codewalnut.productcatalog.ProductCatalogApplication for test class com.codewalnut.productcatalog.ProductIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.2)
+
+2026-08-26T10:36:48.544+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.p.ProductIntegrationTest             : Starting ProductIntegrationTest using Java 26.0.1 with PID 12176 (started by harsh01 in /Users/harsh01/TASKS/Task14-Product-Catalog)
+2026-08-26T10:36:48.544+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.p.ProductIntegrationTest             : The following 1 profile is active: "test"
+2026-08-26T10:36:48.732+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-08-26T10:36:48.732+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-08-26T10:36:48.734+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-08-26T10:36:48.735+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 3 ms
+2026-08-26T10:36:48.744+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.p.ProductIntegrationTest             : Started ProductIntegrationTest in 0.217 seconds (process running for 2.536)
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.319 s -- in com.codewalnut.productcatalog.ProductIntegrationTest
+[INFO] Running com.codewalnut.productcatalog.controller.InfoControllerTest
+2026-08-26T10:36:48.843+05:30  INFO 12176 --- [Product Catalog API] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.codewalnut.productcatalog.controller.InfoControllerTest]: InfoControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-08-26T10:36:48.853+05:30  INFO 12176 --- [Product Catalog API] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.codewalnut.productcatalog.ProductCatalogApplication for test class com.codewalnut.productcatalog.controller.InfoControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.2)
+
+2026-08-26T10:36:48.923+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.p.controller.InfoControllerTest      : Starting InfoControllerTest using Java 26.0.1 with PID 12176 (started by harsh01 in /Users/harsh01/TASKS/Task14-Product-Catalog)
+2026-08-26T10:36:48.923+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.p.controller.InfoControllerTest      : No active profile set, falling back to 1 default profile: "default"
+2026-08-26T10:36:49.000+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-08-26T10:36:49.000+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-08-26T10:36:49.000+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-08-26T10:36:49.002+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.p.controller.InfoControllerTest      : Started InfoControllerTest in 0.143 seconds (process running for 2.794)
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.165 s -- in com.codewalnut.productcatalog.controller.InfoControllerTest
+[INFO] Running com.codewalnut.productcatalog.controller.ProductControllerTest
+2026-08-26T10:36:49.009+05:30  INFO 12176 --- [Product Catalog API] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.codewalnut.productcatalog.controller.ProductControllerTest]: ProductControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-08-26T10:36:49.010+05:30  INFO 12176 --- [Product Catalog API] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.codewalnut.productcatalog.ProductCatalogApplication for test class com.codewalnut.productcatalog.controller.ProductControllerTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.081 s -- in com.codewalnut.productcatalog.controller.ProductControllerTest
+[INFO] Running com.codewalnut.productcatalog.ProductCatalogApplicationTest
+2026-08-26T10:36:49.090+05:30  INFO 12176 --- [Product Catalog API] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.codewalnut.productcatalog.ProductCatalogApplicationTest]: ProductCatalogApplicationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-08-26T10:36:49.091+05:30  INFO 12176 --- [Product Catalog API] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.codewalnut.productcatalog.ProductCatalogApplication for test class com.codewalnut.productcatalog.ProductCatalogApplicationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.2)
+
+2026-08-26T10:36:49.101+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.p.ProductCatalogApplicationTest      : Starting ProductCatalogApplicationTest using Java 26.0.1 with PID 12176 (started by harsh01 in /Users/harsh01/TASKS/Task14-Product-Catalog)
+2026-08-26T10:36:49.101+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.p.ProductCatalogApplicationTest      : No active profile set, falling back to 1 default profile: "default"
+2026-08-26T10:36:49.244+05:30  INFO 12176 --- [Product Catalog API] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-08-26T10:36:49.252+05:30  INFO 12176 --- [Product Catalog API] [           main] c.c.p.ProductCatalogApplicationTest      : Started ProductCatalogApplicationTest in 0.16 seconds (process running for 3.043)
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.166 s -- in com.codewalnut.productcatalog.ProductCatalogApplicationTest
+[INFO] Running com.codewalnut.productcatalog.service.ProductServiceTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.099 s -- in com.codewalnut.productcatalog.service.ProductServiceTest
+[INFO] Running com.codewalnut.productcatalog.exception.GlobalExceptionHandlerTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.075 s -- in com.codewalnut.productcatalog.exception.GlobalExceptionHandlerTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 45, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ product-catalog ---
+[INFO] Building jar: /Users/harsh01/TASKS/Task14-Product-Catalog/target/product-catalog-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot:3.4.2:repackage (repackage) @ product-catalog ---
+[INFO] Replacing main artifact /Users/harsh01/TASKS/Task14-Product-Catalog/target/product-catalog-1.0.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to /Users/harsh01/TASKS/Task14-Product-Catalog/target/product-catalog-1.0.0-SNAPSHOT.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  5.188 s
+[INFO] Finished at: 2026-08-26T10:36:49+05:30
+[INFO] ------------------------------------------------------------------------
