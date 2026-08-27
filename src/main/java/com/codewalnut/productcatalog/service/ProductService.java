@@ -1,8 +1,10 @@
 package com.codewalnut.productcatalog.service;
 
+import com.codewalnut.productcatalog.config.CatalogProperties;
 import com.codewalnut.productcatalog.dto.ProductRequest;
 import com.codewalnut.productcatalog.dto.ProductResponse;
 import com.codewalnut.productcatalog.exception.DuplicateSkuException;
+import com.codewalnut.productcatalog.exception.ProductLimitReachedException;
 import com.codewalnut.productcatalog.exception.ProductNotFoundException;
 import com.codewalnut.productcatalog.mapper.ProductMapper;
 import com.codewalnut.productcatalog.model.Product;
@@ -17,13 +19,21 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final CatalogProperties catalogProperties;
 
-    public ProductService(ProductRepository productRepository, ProductMapper productMapper) {
+    public ProductService(
+            ProductRepository productRepository,
+            ProductMapper productMapper,
+            CatalogProperties catalogProperties) {
         this.productRepository = productRepository;
         this.productMapper = productMapper;
+        this.catalogProperties = catalogProperties;
     }
 
     public ProductResponse create(ProductRequest request) {
+        if (productRepository.count() >= catalogProperties.getMaximumProducts()) {
+            throw new ProductLimitReachedException(catalogProperties.getMaximumProducts());
+        }
         if (productRepository.existsBySkuIgnoreCase(request.getSku())) {
             throw new DuplicateSkuException(request.getSku());
         }
@@ -35,6 +45,15 @@ public class ProductService {
 
     public List<ProductResponse> findAll() {
         return productRepository.findAll().stream()
+                .map(productMapper::toResponse)
+                .toList();
+    }
+
+    public List<ProductResponse> findLowStock() {
+        int threshold = catalogProperties.getLowStockThreshold();
+        return productRepository.findAll().stream()
+                .filter(Product::isActive)
+                .filter(product -> product.getStockQuantity() <= threshold)
                 .map(productMapper::toResponse)
                 .toList();
     }

@@ -1,8 +1,10 @@
 package com.codewalnut.productcatalog.service;
 
+import com.codewalnut.productcatalog.config.CatalogProperties;
 import com.codewalnut.productcatalog.dto.ProductRequest;
 import com.codewalnut.productcatalog.dto.ProductResponse;
 import com.codewalnut.productcatalog.exception.DuplicateSkuException;
+import com.codewalnut.productcatalog.exception.ProductLimitReachedException;
 import com.codewalnut.productcatalog.exception.ProductNotFoundException;
 import com.codewalnut.productcatalog.mapper.ProductMapper;
 import com.codewalnut.productcatalog.model.Product;
@@ -34,17 +36,23 @@ class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    private CatalogProperties catalogProperties;
+
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
-        productService = new ProductService(productRepository, new ProductMapper());
+        catalogProperties = new CatalogProperties();
+        catalogProperties.setMaximumProducts(500);
+        catalogProperties.setLowStockThreshold(5);
+        productService = new ProductService(productRepository, new ProductMapper(), catalogProperties);
     }
 
     @Test
     void givenValidRequest_whenCreate_thenReturnsSavedProductResponse() {
         // Arrange
         ProductRequest request = validRequest("SKU-001");
+        when(productRepository.count()).thenReturn(0);
         when(productRepository.existsBySkuIgnoreCase("SKU-001")).thenReturn(false);
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -61,6 +69,7 @@ class ProductServiceTest {
     void givenDuplicateSku_whenCreate_thenThrowsDuplicateSkuException() {
         // Arrange
         ProductRequest request = validRequest("ABC-001");
+        when(productRepository.count()).thenReturn(0);
         when(productRepository.existsBySkuIgnoreCase("ABC-001")).thenReturn(true);
 
         // Act & Assert
@@ -72,6 +81,7 @@ class ProductServiceTest {
     void givenDuplicateSkuDifferentCase_whenCreate_thenThrowsDuplicateSkuException() {
         // Arrange
         ProductRequest request = validRequest("abc-001");
+        when(productRepository.count()).thenReturn(0);
         when(productRepository.existsBySkuIgnoreCase("abc-001")).thenReturn(true);
 
         // Act & Assert
@@ -142,6 +152,7 @@ class ProductServiceTest {
         // Arrange
         ProductRequest request = validRequest("SKU-INACTIVE");
         request.setActive(false);
+        when(productRepository.count()).thenReturn(0);
         when(productRepository.existsBySkuIgnoreCase("SKU-INACTIVE")).thenReturn(false);
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -189,6 +200,35 @@ class ProductServiceTest {
         // Assert
         assertEquals(1, responses.size());
         assertEquals("SKU-001", responses.get(0).getSku());
+    }
+
+    @Test
+    void givenProductsBelowThreshold_whenFindLowStock_thenReturnsOnlyActiveProductsWithinThreshold() {
+        // Arrange
+        catalogProperties.setLowStockThreshold(2);
+        Product lowStockActive = new Product(UUID.randomUUID(), "LOW-1", "A", "Cat", new BigDecimal("1.00"), 2, true);
+        Product aboveThreshold = new Product(UUID.randomUUID(), "OK-1", "B", "Cat", new BigDecimal("1.00"), 5, true);
+        Product inactiveLow = new Product(UUID.randomUUID(), "LOW-2", "C", "Cat", new BigDecimal("1.00"), 1, false);
+        when(productRepository.findAll()).thenReturn(List.of(lowStockActive, aboveThreshold, inactiveLow));
+
+        // Act
+        List<ProductResponse> responses = productService.findLowStock();
+
+        // Assert
+        assertEquals(1, responses.size());
+        assertEquals("LOW-1", responses.get(0).getSku());
+    }
+
+    @Test
+    void givenRepositoryAtMaximum_whenCreate_thenThrowsProductLimitReachedException() {
+        // Arrange
+        ProductRequest request = validRequest("SKU-MAX");
+        catalogProperties.setMaximumProducts(20);
+        when(productRepository.count()).thenReturn(20);
+
+        // Act & Assert
+        assertThrows(ProductLimitReachedException.class, () -> productService.create(request));
+        verify(productRepository, never()).save(any(Product.class));
     }
 
     private ProductRequest validRequest(String sku) {
