@@ -1,6 +1,6 @@
 # Testing, Actuator, and Deliverables Contract
 
-**Status:** Draft — governed by `SPEC.md`  
+**Status:** Implemented — governed by `SPEC.md`  
 **Covers:** `REQ-090`–`REQ-100`, `AC-090`–`AC-095`
 
 ## Requirements
