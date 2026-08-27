@@ -1,8 +1,6 @@
 package com.codewalnut.productcatalog.controller;
 
 import com.codewalnut.productcatalog.dto.ProductRequest;
-import com.codewalnut.productcatalog.exception.DuplicateSkuException;
-import com.codewalnut.productcatalog.exception.ProductNotFoundException;
 import com.codewalnut.productcatalog.repository.ProductRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,10 +18,9 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -75,7 +72,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void givenInvalidRequest_whenCreateProduct_thenReturns400() throws Exception {
+    void givenInvalidRequest_whenCreateProduct_thenReturns400WithFieldErrors() throws Exception {
         // Arrange
         ProductRequest request = validRequest("SKU-001");
         request.setSku("");
@@ -84,35 +81,48 @@ class ProductControllerTest {
         mockMvc.perform(post("/api/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("sku"))
+                .andExpect(jsonPath("$.path").value("/api/products"));
         assertEquals(0, productRepository.count());
     }
 
     @Test
-    void givenMissingProduct_whenGetById_thenThrowsProductNotFoundException() {
-        // Act
-        UUID id = UUID.randomUUID();
-        Exception exception = assertThrows(Exception.class, () ->
-                mockMvc.perform(get("/api/products/{id}", id)).andReturn());
-
-        // Assert
-        assertTrue(containsExceptionType(exception, ProductNotFoundException.class));
+    void givenMissingProduct_whenGetById_thenReturns404ErrorEnvelope() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/products/{id}", UUID.randomUUID()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.path").exists());
     }
 
     @Test
-    void givenDuplicateSku_whenCreateProduct_thenThrowsDuplicateSkuException() throws Exception {
+    void givenDuplicateSku_whenCreateProduct_thenReturns409ErrorEnvelope() throws Exception {
         // Arrange
         createProduct("ABC-001");
 
-        // Act
-        Exception exception = assertThrows(Exception.class, () ->
-                mockMvc.perform(post("/api/products")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(validRequest("abc-001"))))
-                        .andReturn());
+        // Act & Assert
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validRequest("abc-001"))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+    }
 
-        // Assert
-        assertTrue(containsExceptionType(exception, DuplicateSkuException.class));
+    @Test
+    void givenInvalidUuid_whenGetProduct_thenReturns400() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/products/not-a-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void givenUnsupportedMethod_whenPatchProducts_thenReturns405() throws Exception {
+        // Act & Assert
+        mockMvc.perform(patch("/api/products"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.status").value(405));
     }
 
     @Test
@@ -151,13 +161,10 @@ class ProductControllerTest {
     }
 
     @Test
-    void givenMissingProduct_whenDelete_thenThrowsProductNotFoundException() {
-        // Act
-        Exception exception = assertThrows(Exception.class, () ->
-                mockMvc.perform(delete("/api/products/{id}", UUID.randomUUID())).andReturn());
-
-        // Assert
-        assertTrue(containsExceptionType(exception, ProductNotFoundException.class));
+    void givenMissingProduct_whenDelete_thenReturns404() throws Exception {
+        // Act & Assert
+        mockMvc.perform(delete("/api/products/{id}", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -201,16 +208,5 @@ class ProductControllerTest {
         request.setStockQuantity(10);
         request.setActive(true);
         return request;
-    }
-
-    private boolean containsExceptionType(Throwable throwable, Class<?> type) {
-        Throwable current = throwable;
-        while (current != null) {
-            if (type.isInstance(current)) {
-                return true;
-            }
-            current = current.getCause();
-        }
-        return false;
     }
 }
