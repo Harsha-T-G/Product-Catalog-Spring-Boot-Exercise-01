@@ -1,0 +1,3 @@
+catalog:
+  low-stock-threshold: 10
+  maximum-products: 1000
