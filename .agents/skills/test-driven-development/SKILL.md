@@ -1,33 +1,67 @@
 ---
 name: test-driven-development
-description: Use when implementing behavior, fixing a defect, changing logic, or adding REST endpoints in Product Catalog.
+description: Bootstrap for addyosmani test-driven-development. Use when implementing behavior or fixing bugs. Fetches the canonical skill from the web if not installed locally.
+upstream-repo: https://github.com/addyosmani/agent-skills
+upstream-skill: test-driven-development
 ---
 
-# Test-Driven Development
+# Test-Driven Development (Product Catalog bootstrap)
 
-For each approved behavior, use **RED → GREEN → REFACTOR**.
+This file is a **project-local pointer**. The full skill lives in the
+[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) repository.
+Do not implement from this stub alone.
 
-1. Read the requirement, acceptance criterion, and current code.
-2. Write one focused JUnit 5 behavior test. For defects, reproduce the failure.
-3. Run the narrowest Maven test command and confirm it fails for the expected
-   reason. A test that passes immediately does not prove the new behavior.
-4. Write the smallest production change that satisfies the test.
-5. Re-run the focused test, then affected tests. Refactor only while green.
-6. Before task completion, run `./mvnw clean verify`.
+## Step 1 — Load the canonical skill (required)
 
-Name tests in Given-When-Then form, for example
-`givenDuplicateSku_whenCreateProduct_thenThrowsDuplicateSkuException`.
-Structure each test with `// Arrange`, `// Act`, and `// Assert` comments.
+Before writing production code, load the upstream TDD instructions using
+**one** of these methods (prefer A):
 
-Test level selection:
+### A. Fetch skill text for this session (no install)
 
-- **Service:** `@ExtendWith(MockitoExtension.class)` + mocked repository.
-- **Controller:** `@WebMvcTest` + MockMvc + mocked service; import exception handler.
-- **Integration:** `@SpringBootTest` + `@ActiveProfiles("test")` for full HTTP flows.
+```bash
+npx skills use "https://github.com/addyosmani/agent-skills" --skill "test-driven-development"
+```
 
-Prefer real in-memory objects in repository tests; mock only external or slow
-boundaries. Never weaken, skip, or delete a failing test to obtain green output.
-Record RED and GREEN commands in `AI_USAGE.md` or task evidence.
+Read the complete `SKILL.md` output and follow RED → GREEN → REFACTOR.
 
-Suggested commit after each green cycle: `test(scope): ...` or `feat(scope): ...`
-per `AGENTS.md`.
+### B. Install globally (recommended for regular work)
+
+```bash
+npx skills add "https://github.com/addyosmani/agent-skills" -g -y \
+  -s spec-driven-development -s test-driven-development -a cursor
+```
+
+Then read `~/.agents/skills/test-driven-development/SKILL.md`.
+
+### C. Install for this project only
+
+From the repository root:
+
+```bash
+npx skills add "https://github.com/addyosmani/agent-skills" -y \
+  -s spec-driven-development -s test-driven-development -a cursor
+```
+
+Verify with `npx skills list`.
+
+## Step 2 — Apply Product Catalog test conventions
+
+After loading the upstream skill, also read:
+
+- `AGENTS.md` — commit conventions, boundaries
+- `.guidelines/java.md` — package rules, naming
+- `.guidelines/spring-boot.md` — test levels for this stack
+
+| Concern | This repository |
+| --- | --- |
+| Full suite | `./mvnw clean verify` |
+| Single test class | `./mvnw -Dtest=ClassName test` |
+| Service unit tests | `@ExtendWith(MockitoExtension.class)`, mock `ProductRepository` |
+| HTTP tests | `@SpringBootTest` + `MockMvc` (see existing controller tests) |
+| Integration + test profile | `@ActiveProfiles("test")` on integration tests |
+| Test naming | Given-When-Then; `// Arrange`, `// Act`, `// Assert` |
+
+Use real `CatalogProperties` objects in unit tests when Mockito cannot mock
+configuration classes on newer JDKs.
+
+Never weaken, skip, or delete a failing test to obtain a green build.

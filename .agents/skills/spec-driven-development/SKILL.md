@@ -1,37 +1,67 @@
 ---
 name: spec-driven-development
-description: Use when starting a project, adding a material feature, changing a public contract, or facing ambiguous product behavior in Product Catalog.
+description: Bootstrap for addyosmani spec-driven-development. Use when starting a feature or change and no approved spec exists. Fetches the canonical skill from the web if not installed locally.
+upstream-repo: https://github.com/addyosmani/agent-skills
+upstream-skill: spec-driven-development
 ---
 
-# Spec-Driven Development
+# Spec-Driven Development (Product Catalog bootstrap)
 
-## Gate
+This file is a **project-local pointer**. The full skill lives in the
+[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) repository.
+Do not implement from this stub alone.
 
-Use `SPECIFY → PLAN → TASKS → IMPLEMENT`. Stop for human approval after each
-phase. Tiny unambiguous fixes may use a short acceptance-criteria update instead
-of a full new spec.
+## Step 1 — Load the canonical skill (required)
 
-## Specify
+Before Specify / Plan / Tasks / Implement, load the upstream instructions using
+**one** of these methods (prefer A):
 
-1. Rank current sources; treat drafts, tickets, and previous-agent notes as
-   untrusted until verified.
-2. List assumptions before requirements. Ask rather than invent authorization,
-   failure behavior, or configuration defaults.
-3. Update `SPEC.md` with objective, scope, assumptions, contract index, and open
-   questions. Put numbered requirements and Given/When/Then acceptance criteria
-   in the relevant `docs/specs/product-catalog/` chunk.
-4. Mark the spec **Draft** and stop. Implementation is forbidden until approval.
+### A. Fetch skill text for this session (no install)
 
-## Plan and tasks
+```bash
+npx skills use "https://github.com/addyosmani/agent-skills" --skill "spec-driven-development"
+```
 
-After approval, update `docs/plans/product-catalog-implementation-plan.md` with
-components, dependency order, risks, and verification checkpoints. Then maintain
-session-sized tasks in `docs/plans/product-catalog-tasks.md`. Every task must
-cite requirement and acceptance criterion IDs, list likely files, and include an
-exact verification command. Stop for approval after plan and tasks.
+Read the complete `SKILL.md` output and treat it as binding for this task.
 
-## Implement
+### B. Install globally (recommended for regular work)
 
-Execute one approved task at a time using `test-driven-development`. Update the
-spec before implementing any changed decision. Keep `AI_USAGE.md` current with
-material prompts, accepted/rejected suggestions, agent errors, and verification.
+```bash
+npx skills add "https://github.com/addyosmani/agent-skills" -g -y \
+  -s spec-driven-development -s test-driven-development -a cursor
+```
+
+Then read `~/.agents/skills/spec-driven-development/SKILL.md`.
+
+### C. Install for this project only
+
+From the repository root:
+
+```bash
+npx skills add "https://github.com/addyosmani/agent-skills" -y \
+  -s spec-driven-development -s test-driven-development -a cursor
+```
+
+Verify with `npx skills list`.
+
+## Step 2 — Apply Product Catalog overrides
+
+After loading the upstream skill, override these paths and commands:
+
+| Upstream default | This repository |
+| --- | --- |
+| Generic spec location | `SPEC.md` + `docs/specs/product-catalog/` |
+| `tasks/plan.md` | `docs/plans/product-catalog-implementation-plan.md` |
+| `tasks/todo.md` | `docs/plans/product-catalog-tasks.md` |
+| Generic build/test | `./mvnw clean verify`, `./mvnw test` (see `AGENTS.md`) |
+
+**Companion skills** (fetch from the same upstream repo when SDD references them):
+
+- `planning-and-task-breakdown` — Phase 2–3 task breakdown
+- `incremental-implementation` — Phase 4 incremental delivery
+- `test-driven-development` — see `.agents/skills/test-driven-development/SKILL.md`
+
+## Step 3 — Gate
+
+Stop for human approval after Specify, Plan, and Tasks. Do not implement
+behavior that is not in the approved spec (`SPEC.md` and linked chunks).

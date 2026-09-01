@@ -1,0 +1,26 @@
+Week 6 test evidence — Product Catalog API
+Date: 2026-09-01
+Command: ./mvnw clean test
+Result: BUILD SUCCESS
+
+Tests run: 93, Failures: 0, Errors: 0, Skipped: 0
+
+Test classes (PostgreSQL Testcontainers unless noted):
+- FlywayMigrationTest (2)
+- ProductCatalogApplicationTest (1)
+- ProductIntegrationTest (8)
+- ProductRepositoryTest (8) — @DataJpaTest
+- ProductServiceTest (19) — Mockito unit tests
+- ProductServiceIntegrationTest (8)
+- ProductPersistenceSupportIntegrationTest (2)
+- ProductPageRequestFactoryTest (4)
+- ProductControllerTest (22)
+- ProductControllerWebMvcTest (3) — standalone MockMvc + mocked service
+- ActuatorEndpointTest (3)
+- GlobalExceptionHandlerTest (12)
+- InfoControllerTest (1)
+
+Notes:
+- Shared PostgreSQL Testcontainers singleton (Docker 29 via docker-java.properties api 1.44)
+- Surefire uses -Dnet.bytebuddy.experimental=true for Java 26 Mockito compatibility
+- DOCKER_HOST no longer hardcoded in pom.xml or testcontainers.properties
