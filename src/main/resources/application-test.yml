@@ -19,3 +19,9 @@ catalog:
   maximum-products: 20
   default-page-size: 5
   max-page-size: 10
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

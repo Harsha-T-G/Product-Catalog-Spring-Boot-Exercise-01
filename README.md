@@ -43,13 +43,34 @@ If tests fail with `Could not find a valid Docker environment` or
    ./scripts/verify-tests.sh
    ```
 
+### Startup error: `jdbcUrl, ${DB_URL}`
+
+Spring is using the literal placeholder because **`DB_PASSWORD` (and optionally `DB_URL`) are not in the environment**. Spring Boot does not read `.env` automatically.
+
+**Fix (reset DB — required after changing username/password):**
+
+```bash
+./scripts/reset-local-db.sh
+./scripts/run-dev.sh
+```
+
+This runs `docker compose down -v` and recreates Postgres so `root` / `root@123` from `.env` are applied.
+
+**Fix (IntelliJ / IDE):** In the run configuration, add environment variables from `.env`:
+
+- `DB_URL=jdbc:postgresql://localhost:5432/product_catalog`
+- `DB_USERNAME=root`
+- `DB_PASSWORD=root@123`
+
+Active profile: **`dev`**
+
 ## Quick start (application with PostgreSQL)
 
 1. Copy environment template and set a local password:
 
 ```bash
 cp .env.example .env
-# Edit .env — set POSTGRES_PASSWORD and DB_PASSWORD (same value is fine locally)
+# Local defaults: user root, password root@123 (already in .env.example)
 ```
 
 2. Start PostgreSQL:
@@ -66,6 +87,17 @@ set -a && source .env && set +a
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 curl http://localhost:8080/api/info
 curl http://localhost:8080/actuator/health
+```
+
+Swagger UI is available for interactive API testing (disabled only in the `test` profile):
+
+- **Swagger UI:** http://localhost:8080/swagger-ui.html
+- **OpenAPI JSON:** http://localhost:8080/v3/api-docs
+
+Or one command (Compose + `.env` + app):
+
+```bash
+./scripts/run-dev.sh
 ```
 
 4. Stop PostgreSQL when finished:
@@ -87,9 +119,9 @@ Default port: **8080**. PostgreSQL: **5432**.
 | Variable | Purpose |
 |----------|---------|
 | `DB_URL` | JDBC URL (default in dev profile: `jdbc:postgresql://localhost:5432/product_catalog`) |
-| `DB_USERNAME` | Application database user (default: `product_catalog_app`) |
-| `DB_PASSWORD` | Application password — **never commit**; set via `.env` locally |
-| `POSTGRES_PASSWORD` | Used by Docker Compose to initialize the container user |
+| `DB_USERNAME` | Application database user (local default: `root`) |
+| `DB_PASSWORD` | Application password (local default in `.env.example`: `root@123`) |
+| `POSTGRES_PASSWORD` | Used by Docker Compose to initialize the container user (must match `DB_PASSWORD`) |
 | `CATALOG_MAXIMUM_PRODUCTS` | Optional override for catalog size limit (default 500) |
 
 If the database is unavailable, the application fails at startup with a clear
@@ -193,6 +225,8 @@ See [docs/diagrams/week6-architecture.md](docs/diagrams/week6-architecture.md):
 - ER diagram for the `products` table
 - Sequence diagram for creating a product
 
+**Implementation walkthrough:** [docs/week6-implementation-flow.md](docs/week6-implementation-flow.md) — exercise-by-exercise flow, branch progression, request paths, and package map.
+
 ## Package structure
 
 ```text
@@ -225,6 +259,7 @@ task14-main
 | Specs | [docs/specs/product-catalog/](docs/specs/product-catalog/) |
 | Plans | [docs/plans/](docs/plans/) |
 | Self review | [SELF_REVIEW.md](SELF_REVIEW.md) |
+| Week 6 implementation flow | [docs/week6-implementation-flow.md](docs/week6-implementation-flow.md) |
 | Test evidence | [docs/test-evidence.txt](docs/test-evidence.txt) |
 
 ## Tests

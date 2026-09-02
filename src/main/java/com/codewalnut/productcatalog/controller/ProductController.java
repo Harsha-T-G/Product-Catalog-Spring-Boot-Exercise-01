@@ -6,6 +6,7 @@ import com.codewalnut.productcatalog.dto.ProductResponse;
 import com.codewalnut.productcatalog.dto.ProductSearchCriteria;
 import com.codewalnut.productcatalog.dto.StockAdjustmentRequest;
 import com.codewalnut.productcatalog.service.ProductService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,6 +24,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Products", description = "Product catalog CRUD, search, and stock operations")
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
