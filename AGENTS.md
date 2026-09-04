@@ -17,39 +17,40 @@ Surface conflicts instead of silently selecting a source.
 
 ## Repository purpose
 
-Product Catalog is a Spring Boot 3.x learning application that exposes an
-in-memory REST API for product management. It demonstrates layered design,
+Product Catalog is a Spring Boot 3.x learning application that exposes a REST API
+for product management backed by PostgreSQL. It demonstrates layered design,
 dependency injection, validation, centralized error handling, configuration
-profiles, and automated testing. It deliberately has no database, JPA, or Lombok.
+profiles, Flyway migrations, JPA persistence, Testcontainers-backed testing, and
+Lombok for DTOs and entities.
 
-## Gated workflow
+**Current status:** Week 6 complete on `week6-exercise-6-docs-delivery`
+(PostgreSQL, pagination, stock PATCH, database tests, docs).
 
-Use **Specify → Plan → Tasks → Implement**. Stop for human approval after each
-phase. Do not implement behavior that is not in the approved spec.
+### Project path overrides (addyosmani defaults)
 
-| Phase | Artifact | Gate |
-| --- | --- | --- |
-| Specify | `SPEC.md`, `docs/specs/product-catalog/` | Human approves spec |
-| Plan | `docs/plans/product-catalog-implementation-plan.md` | Human approves plan |
-| Tasks | `docs/plans/product-catalog-tasks.md` | Human approves tasks |
-| Implement | Source and tests per task | TDD + verify-feature-readiness |
+The `spec-driven-development` skill defaults to `tasks/plan.md` and `tasks/todo.md`.
+**Override for this repository:**
 
-**Current status:** Draft spec and plan prepared. **Implementation is forbidden
-until the spec is approved.**
+| Skill default | Use instead |
+| --- | --- |
+| Spec output | `docs/specs/product-catalog/` chunks indexed by `SPEC.md` |
+| `tasks/plan.md` | `docs/plans/product-catalog-implementation-plan.md` |
+| `tasks/todo.md` | `docs/plans/product-catalog-tasks.md` |
 
 ## Required routing
 
-- New features or material behavior changes: read and follow
-  `.agents/skills/spec-driven-development/SKILL.md`.
-- API, validation, configuration, or error-handling work: read the matching
-  `docs/specs/product-catalog/` chunk listed in `SPEC.md`.
-- Java or Spring Boot source, tests, Maven: read `.guidelines/java.md` and
-  `.guidelines/spring-boot.md`.
-- Implementation or bug fixes: follow
-  `.agents/skills/test-driven-development/SKILL.md`.
-- Before reporting work ready, committing, or opening a PR: follow
-  `.agents/skills/verify-feature-readiness/SKILL.md`.
-- Domain terminology: read `CONTEXT.md`.
+Use the **vendored skills in this repo** (`.agents/skills/*/SKILL.md`). Do not
+fetch external skill URLs or depend on global `~/.agents/skills/` copies for this
+project. See `.agents/README.md`.
+
+| Situation | Skill(s) | Also read |
+| --- | --- | --- |
+| New project, feature, or unclear requirements | `spec-driven-development` | `SPEC.md`, affected spec chunk |
+| Breaking work into ordered tasks | `planning-and-task-breakdown` | `docs/plans/` |
+| Implementation or bug fix (production behavior) | `test-driven-development` | `.guidelines/java.md`, `.guidelines/spring-boot.md` |
+| Multi-file change landing incrementally | `incremental-implementation` | approved task from `docs/plans/product-catalog-tasks.md` |
+| API, validation, config, or error-handling detail | — | matching `docs/specs/product-catalog/` chunk in `SPEC.md` |
+| Domain terminology | — | `CONTEXT.md` |
 
 ## Ownership and layout
 
@@ -57,17 +58,18 @@ until the spec is approved.**
 src/main/java/com/codewalnut/productcatalog/
   controller/     HTTP adapters only
   service/        business rules and orchestration
-  repository/     in-memory persistence boundary
-  model/          internal domain entities
+  repository/     Spring Data JPA + Specifications
+  entity/         JPA persistence model
+  mapper/         entity ↔ DTO mapping
   dto/            request/response and error payloads
   exception/      domain exceptions and global handler
   config/         @ConfigurationProperties and profile wiring
-src/test/java/    mirrors production packages
+src/test/java/    mirrors production packages + support/
 SPEC.md           product contract index and approval status
 docs/specs/product-catalog/   capability contract chunks
 docs/plans/       implementation plan and tasks (after spec approval)
 CONTEXT.md        stable domain glossary
-.agents/skills/   reusable agent procedures
+.agents/skills/   bootstrap SKILL.md → fetch canonical skills from web
 .guidelines/      stable stack conventions
 ```
 
@@ -138,7 +140,9 @@ exercise-N-short-description
 feat/short-description
 ```
 
-Use the PR template at `.github/pull_request_template.md`.
+Use the PR template at `.github/pull_request_template.md`. Draft the body with
+`.agents/skills/write-pr-description/SKILL.md`. Open or update the PR with
+`.agents/skills/create-pr/SKILL.md`.
 
 ## Working boundaries
 
@@ -154,15 +158,15 @@ Always:
 Ask first:
 
 - Changing the approved spec or Java/Spring Boot version.
-- Adding dependencies beyond the exercise list (web, validation, actuator, test).
-- Adding database, JPA, Lombok, or CI workflows.
+- Adding dependencies beyond the exercise list (web, validation, actuator, JPA,
+  PostgreSQL driver, Flyway, Testcontainers, Lombok, test).
+- Adding Spring Security or CI workflows.
 - Changing public API contracts or package boundaries.
 
 Never:
 
 - Add secrets, credentials, or personal environment data to the repo.
 - Log passwords, tokens, or complete sensitive request bodies.
-- Use Lombok, Spring Data JPA, or a database for this exercise.
 - Weaken, skip, or delete a failing test to obtain a green build.
 - Implement behavior that is not in the approved spec.
 - Commit, push, or open a pull request without explicit user authorization.
