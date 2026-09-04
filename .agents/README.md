@@ -1,57 +1,39 @@
 # Agent skills
 
-Skills are **not duplicated** in this repo. Each skill folder contains a
-**bootstrap `SKILL.md`** that tells the agent how to fetch the canonical skill
-from the web.
+Skills are **vendored in this repository** under `.agents/skills/`. Each folder
+contains a complete `SKILL.md` — agents should read the repo copy only, not fetch
+external URLs or depend on `~/.agents/skills/`.
 
-## After cloning — human setup (one time)
+## Available skills
 
-From the repository root, either:
-
-```bash
-# Project-scoped install (good for this repo only)
-./scripts/setup-agent-skills.sh
-
-# Or global install (all projects on this machine)
-./scripts/setup-agent-skills.sh --global
-```
-
-Or manually:
-
-```bash
-npx skills add "https://github.com/addyosmani/agent-skills" -y \
-  -s spec-driven-development -s test-driven-development -a cursor
-```
-
-## After cloning — agent behavior
-
-Agents should read the bootstrap file first, then fetch upstream instructions:
-
-| Skill | Bootstrap (in repo — always present) | Canonical source |
+| Skill | Path | When to use |
 | --- | --- | --- |
-| `spec-driven-development` | `.agents/skills/spec-driven-development/SKILL.md` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) |
-| `test-driven-development` | `.agents/skills/test-driven-development/SKILL.md` | same repo |
+| `spec-driven-development` | `.agents/skills/spec-driven-development/SKILL.md` | New feature or unclear requirements |
+| `test-driven-development` | `.agents/skills/test-driven-development/SKILL.md` | Implementing behavior or fixing bugs |
+| `create-pr` | `.agents/skills/create-pr/SKILL.md` | Opening or updating a pull request |
+| `write-pr-description` | `.agents/skills/write-pr-description/SKILL.md` | Drafting PR body from template |
 
-If skills are not installed locally, run:
+`write-pr-description` includes supporting references under
+`.agents/skills/write-pr-description/references/`.
 
-```bash
-npx skills use "https://github.com/addyosmani/agent-skills" --skill "<skill-name>"
-```
+## Product Catalog path overrides
 
-and follow the printed `SKILL.md` before coding.
+Built into the vendored SDD/TDD skills:
 
-## Optional global copy
+| Generic | This repository |
+| --- | --- |
+| Spec output | `docs/specs/product-catalog/` indexed by `SPEC.md` |
+| Plan | `docs/plans/product-catalog-implementation-plan.md` |
+| Tasks | `docs/plans/product-catalog-tasks.md` |
+| Verify | `./mvnw clean verify` |
 
-If you previously ran a global install, skills may also exist at:
+## Optional: upstream sync
 
-```text
-~/.agents/skills/spec-driven-development/SKILL.md
-~/.agents/skills/test-driven-development/SKILL.md
-```
+To refresh from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)
+or your global `~/.agents/skills/` copies, copy files into `.agents/skills/` and
+re-apply the **Product Catalog overrides** sections at the top of each skill.
 
-Bootstrap files in this repo still apply **Product Catalog path overrides**
-(`docs/specs/product-catalog/`, `docs/plans/`, `./mvnw` commands).
+`scripts/setup-agent-skills.sh` is optional legacy install for global copies — the
+repo skills are authoritative for agents working in this project.
 
-## Routing
-
-See `AGENTS.md` for when to invoke each skill and project boundaries.
+See `AGENTS.md` for routing and boundaries.

@@ -4,7 +4,8 @@
 
 - Target Java 21 and Spring Boot 3.4.x. Use the checked-in Maven Wrapper.
 - Package root: `com.codewalnut.productcatalog`.
-- Do not add Lombok, JPA, or database dependencies without approval.
+- Do not add JPA or database dependencies without approval.
+- Lombok is allowed for DTOs and configuration properties; avoid `@Data` on JPA entities.
 - Constructor injection only. No field `@Autowired`.
 
 ## Package boundaries

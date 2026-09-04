@@ -1,8 +1,11 @@
 package com.codewalnut.productcatalog.dto;
 
+import lombok.Getter;
+
 import java.time.Instant;
 import java.util.List;
 
+@Getter
 public class ErrorResponse {
 
     private final Instant timestamp;
@@ -38,33 +41,5 @@ public class ErrorResponse {
         this.path = path;
         this.fieldErrors = fieldErrors == null ? List.of() : List.copyOf(fieldErrors);
         this.errorReferenceId = errorReferenceId;
-    }
-
-    public Instant getTimestamp() {
-        return timestamp;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public List<FieldErrorDetail> getFieldErrors() {
-        return fieldErrors;
-    }
-
-    public String getErrorReferenceId() {
-        return errorReferenceId;
     }
 }

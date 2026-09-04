@@ -12,7 +12,7 @@
    (`week6-exercise-1-postgresql-config` through `week6-exercise-6-docs-delivery`).
 3. Products are persisted in **PostgreSQL**. Flyway owns schema; Hibernate
    `ddl-auto=validate` only. Spring Data JPA is the persistence boundary.
-4. Lombok is not used. Constructor injection only; no field `@Autowired`.
+4. Lombok is used on DTOs and entities (`@Getter`/`@Setter` or `@Value`). Constructor injection only; no field `@Autowired`.
 5. Controllers handle HTTP only. Business logic lives in the service layer.
 6. REST boundaries use request/response DTOs; JPA entities are never returned
    directly.
@@ -54,7 +54,7 @@ optimistic locking, and Testcontainers-backed automated testing.
 
 ### Out of scope
 
-- Lombok, authentication, authorization, rate limiting, or multi-tenancy
+- Authentication, authorization, rate limiting, or multi-tenancy
 - `/api/v1` versioning (exercise contract uses `/api/products`)
 - Production deployment, CI pipelines (initial agentic setup)
 - Logging sensitive data (passwords, tokens, full request bodies)

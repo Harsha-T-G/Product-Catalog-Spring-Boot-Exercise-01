@@ -20,8 +20,8 @@ Surface conflicts instead of silently selecting a source.
 Product Catalog is a Spring Boot 3.x learning application that exposes a REST API
 for product management backed by PostgreSQL. It demonstrates layered design,
 dependency injection, validation, centralized error handling, configuration
-profiles, Flyway migrations, JPA persistence, and Testcontainers-backed testing.
-It deliberately has no Lombok.
+profiles, Flyway migrations, JPA persistence, Testcontainers-backed testing, and
+Lombok for DTOs and entities.
 
 **Current status:** Week 6 complete on `week6-exercise-6-docs-delivery`
 (PostgreSQL, pagination, stock PATCH, database tests, docs).
@@ -39,11 +39,9 @@ The `spec-driven-development` skill defaults to `tasks/plan.md` and `tasks/todo.
 
 ## Required routing
 
-Use the **bootstrap skills in this repo** (`.agents/skills/*/SKILL.md`). Each
-bootstrap tells the agent to fetch the canonical skill from
-[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) via
-`npx skills use` or `npx skills add` if not installed locally. See
-`.agents/README.md` and `scripts/setup-agent-skills.sh`.
+Use the **vendored skills in this repo** (`.agents/skills/*/SKILL.md`). Do not
+fetch external skill URLs or depend on global `~/.agents/skills/` copies for this
+project. See `.agents/README.md`.
 
 | Situation | Skill(s) | Also read |
 | --- | --- | --- |
@@ -142,7 +140,9 @@ exercise-N-short-description
 feat/short-description
 ```
 
-Use the PR template at `.github/pull_request_template.md`.
+Use the PR template at `.github/pull_request_template.md`. Draft the body with
+`.agents/skills/write-pr-description/SKILL.md`. Open or update the PR with
+`.agents/skills/create-pr/SKILL.md`.
 
 ## Working boundaries
 
@@ -159,15 +159,14 @@ Ask first:
 
 - Changing the approved spec or Java/Spring Boot version.
 - Adding dependencies beyond the exercise list (web, validation, actuator, JPA,
-  PostgreSQL driver, Flyway, Testcontainers, test).
-- Adding Lombok, Spring Security, or CI workflows.
+  PostgreSQL driver, Flyway, Testcontainers, Lombok, test).
+- Adding Spring Security or CI workflows.
 - Changing public API contracts or package boundaries.
 
 Never:
 
 - Add secrets, credentials, or personal environment data to the repo.
 - Log passwords, tokens, or complete sensitive request bodies.
-- Use Lombok for this exercise.
 - Weaken, skip, or delete a failing test to obtain a green build.
 - Implement behavior that is not in the approved spec.
 - Commit, push, or open a pull request without explicit user authorization.
