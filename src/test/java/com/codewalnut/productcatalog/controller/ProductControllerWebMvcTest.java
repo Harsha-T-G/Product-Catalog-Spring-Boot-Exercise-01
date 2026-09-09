@@ -52,7 +52,7 @@ class ProductControllerWebMvcTest {
     void givenValidRequest_whenCreateProduct_thenReturns201WithLocationHeader() throws Exception {
         UUID id = UUID.randomUUID();
         when(productService.create(any(ProductRequest.class))).thenReturn(
-                new ProductResponse(id, "SKU-001", "Sample", "General", new BigDecimal("19.99"), 10, true, null, null, 0L));
+                new ProductResponse(id, "SKU-001", "Sample", "General", new BigDecimal("19.99"), 10, true, null, null));
 
         mockMvc.perform(post("/api/products")
                         .contentType(MediaType.APPLICATION_JSON)

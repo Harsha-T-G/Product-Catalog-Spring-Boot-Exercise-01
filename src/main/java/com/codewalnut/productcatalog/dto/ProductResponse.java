@@ -18,5 +18,4 @@ public class ProductResponse {
     boolean active;
     Instant createdAt;
     Instant updatedAt;
-    Long version;
 }

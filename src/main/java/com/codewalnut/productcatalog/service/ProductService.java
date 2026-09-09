@@ -98,7 +98,6 @@ public class ProductService {
     public ProductResponse update(UUID id, ProductRequest request) {
         ProductEntity entity = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
-        assertExpectedVersion(entity, request.getVersion(), id);
         if (productRepository.existsBySkuIgnoreCaseAndIdNot(request.getSku(), id)) {
             throw new DuplicateSkuException(request.getSku());
         }
@@ -128,7 +127,6 @@ public class ProductService {
         return productEntityMapper.toResponse(saved);
     }
 
-    @Transactional
     public void delete(UUID id) {
         if (!productRepository.existsById(id)) {
             throw new ProductNotFoundException(id);

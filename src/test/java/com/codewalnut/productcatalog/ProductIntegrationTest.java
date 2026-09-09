@@ -141,8 +141,7 @@ class ProductIntegrationTest extends PostgreSqlTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sku").value("DB-001"))
                 .andExpect(jsonPath("$.name").value("Integration Product"))
-                .andExpect(jsonPath("$.createdAt").exists())
-                .andExpect(jsonPath("$.version").exists());
+                .andExpect(jsonPath("$.createdAt").exists());
     }
 
     @Test
