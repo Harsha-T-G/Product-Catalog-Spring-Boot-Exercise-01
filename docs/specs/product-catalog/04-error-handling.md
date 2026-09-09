@@ -1,6 +1,6 @@
 # Error Handling Contract
 
-**Status:** Draft — governed by `SPEC.md`  
+**Status:** Implemented — governed by `SPEC.md`  
 **Covers:** `REQ-050`–`REQ-060`, `AC-050`–`AC-055`
 
 ## Requirements

@@ -1,0 +1,18 @@
+---
+description: PR descriptions follow the repo template and vendored write-pr-description skill
+alwaysApply: true
+---
+
+# Pull request description
+
+When creating or editing a GitHub PR for this repository:
+
+1. Read `.github/pull_request_template.md` and fill every section in your own words.
+2. Follow `.agents/skills/write-pr-description/SKILL.md` (vendored in this repo).
+3. Open or update the PR with `.agents/skills/create-pr/SKILL.md`.
+
+Do **not** use the old Specification / Verification checklist layout unless the user explicitly asks.
+
+Keep sections: **Description**, **Why are these changes needed?**, **Key Changes**, **How to Test**, **Media (If UI changes)**.
+
+For Maven verification, use `./mvnw clean verify` (not npm). Omit screenshots when there is no UI; link diagrams or curl docs instead.

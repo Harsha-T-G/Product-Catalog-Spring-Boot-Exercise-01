@@ -1,0 +1,321 @@
+package com.codewalnut.productcatalog.controller;
+
+import com.codewalnut.productcatalog.dto.ProductRequest;
+import com.codewalnut.productcatalog.repository.ProductRepository;
+import com.codewalnut.productcatalog.support.ProductTestFixtures;
+import com.codewalnut.productcatalog.support.PostgreSqlTestSupport;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class ProductControllerTest extends PostgreSqlTestSupport {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @BeforeEach
+    void clearProducts() {
+        productRepository.deleteAll();
+    }
+
+    @Test
+    void givenValidRequest_whenCreateProduct_thenReturns201WithLocationHeader() throws Exception {
+        // Act
+        MvcResult result = mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validRequest("SKU-001"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.sku").value("SKU-001"))
+                .andReturn();
+
+        // Assert
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        String id = body.get("id").asText();
+        assertEquals("/api/products/" + id, result.getResponse().getHeader("Location"));
+    }
+
+    @Test
+    void givenExistingProduct_whenGetById_thenReturns200() throws Exception {
+        // Arrange
+        String id = createProduct("SKU-100");
+
+        // Act & Assert
+        mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sku").value("SKU-100"));
+    }
+
+    @Test
+    void givenInvalidRequest_whenCreateProduct_thenReturns400WithFieldErrors() throws Exception {
+        // Arrange
+        ProductRequest request = validRequest("SKU-001");
+        request.setSku("");
+
+        // Act & Assert
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("sku"))
+                .andExpect(jsonPath("$.path").value("/api/products"));
+        assertEquals(0, productRepository.count());
+    }
+
+    @Test
+    void givenMalformedJson_whenCreateProduct_thenReturns400() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{invalid-json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Malformed request body"));
+    }
+
+    @Test
+    void givenPriceWithTooManyDecimals_whenCreateProduct_thenReturns400() throws Exception {
+        ProductRequest request = validRequest("SKU-PREC");
+        request.setPrice(new BigDecimal("1.999"));
+
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field=='price')]").exists());
+    }
+
+    @Test
+    void givenMissingProduct_whenGetById_thenReturns404ErrorEnvelope() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/products/{id}", UUID.randomUUID()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.path").exists());
+    }
+
+    @Test
+    void givenDuplicateSku_whenCreateProduct_thenReturns409ErrorEnvelope() throws Exception {
+        // Arrange
+        createProduct("ABC-001");
+
+        // Act & Assert
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validRequest("abc-001"))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+    }
+
+    @Test
+    void givenInvalidUuid_whenGetProduct_thenReturns400() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/products/not-a-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void givenUnsupportedMethod_whenPatchCollection_thenReturns405() throws Exception {
+        // Act & Assert
+        mockMvc.perform(patch("/api/products"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.status").value(405));
+    }
+
+    @Test
+    void givenNegativePage_whenListProducts_thenReturns400() throws Exception {
+        mockMvc.perform(get("/api/products").param("page", "-1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void givenInvalidPageSize_whenListProducts_thenReturns400() throws Exception {
+        mockMvc.perform(get("/api/products").param("size", "100"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void givenInvalidSortField_whenListProducts_thenReturns400() throws Exception {
+        mockMvc.perform(get("/api/products").param("sort", "invalid,asc"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void givenProducts_whenFilterByCategory_thenReturnsMatchingPage() throws Exception {
+        createProductWithCategory("SKU-A", "Electronics");
+        createProductWithCategory("SKU-B", "Books");
+
+        mockMvc.perform(get("/api/products").param("category", "electronics"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].sku").value("SKU-A"));
+    }
+
+    @Test
+    void givenProduct_whenIncreaseStock_thenReturnsUpdatedQuantity() throws Exception {
+        String id = createProduct("SKU-STOCK-UP");
+
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"adjustment\":5}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(15));
+    }
+
+    @Test
+    void givenProduct_whenDecreaseStock_thenReturnsUpdatedQuantity() throws Exception {
+        String id = createProduct("SKU-STOCK-DOWN");
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"adjustment\":5}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"adjustment\":-3}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(12));
+    }
+
+    @Test
+    void givenInsufficientStock_whenAdjustStock_thenReturns400AndPreservesQuantity() throws Exception {
+        String id = createProduct("SKU-LOW");
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"adjustment\":-100}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(10));
+    }
+
+    @Test
+    void givenZeroAdjustment_whenAdjustStock_thenReturns400() throws Exception {
+        String id = createProduct("SKU-ZERO");
+
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"adjustment\":0}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void givenExistingProduct_whenDelete_thenReturns204() throws Exception {
+        // Arrange
+        String id = createProduct("SKU-200");
+
+        // Act & Assert
+        mockMvc.perform(delete("/api/products/{id}", id))
+                .andExpect(status().isNoContent());
+        assertEquals(0, productRepository.count());
+    }
+
+    @Test
+    void givenExistingProduct_whenUpdate_thenReturns200() throws Exception {
+        // Arrange
+        String id = createProduct("SKU-300");
+        ProductRequest update = validRequest("SKU-301");
+
+        // Act & Assert
+        mockMvc.perform(put("/api/products/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sku").value("SKU-301"))
+                .andExpect(jsonPath("$.id").value(id));
+    }
+
+    @Test
+    void givenNoProducts_whenListProducts_thenReturnsEmptyPage() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/products"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void givenMissingProduct_whenDelete_thenReturns404() throws Exception {
+        // Act & Assert
+        mockMvc.perform(delete("/api/products/{id}", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void givenInactiveProduct_whenCreateAndGet_thenActiveFlagIsPreserved() throws Exception {
+        // Arrange
+        ProductRequest request = validRequest("SKU-INACTIVE");
+        request.setActive(false);
+
+        // Act
+        MvcResult result = mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        String id = body.get("id").asText();
+
+        // Assert
+        mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+        assertFalse(body.get("active").asBoolean());
+    }
+
+    private String createProductWithCategory(String sku, String category) throws Exception {
+        ProductRequest request = validRequest(sku);
+        request.setCategory(category);
+        MvcResult result = mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+    }
+
+    private String createProduct(String sku) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validRequest(sku))))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+    }
+
+    private ProductRequest validRequest(String sku) {
+        return ProductTestFixtures.validProductRequest(sku);
+    }
+}
