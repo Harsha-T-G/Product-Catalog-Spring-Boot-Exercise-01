@@ -17,9 +17,9 @@ once approved.
 
 ## Terms
 
-- **Product** — internal domain entity stored in the in-memory repository. Holds
-  UUID id, SKU, name, category, price, stock quantity, and active flag. Not
-  exposed directly through the REST API.
+- **Product** — JPA entity (`ProductEntity`) persisted in PostgreSQL. Holds UUID id,
+  SKU, name, category, price, stock quantity, active flag, optimistic-lock version,
+  and timestamps. Not exposed directly through the REST API.
 - **SKU** — business identifier string for a product. Required, unique across
   the catalog with case-insensitive comparison. Immutable identity for business
   deduplication; distinct from the UUID primary key.
@@ -34,8 +34,8 @@ once approved.
 - **Catalog properties** — type-safe configuration (`catalog.*`) for
   low-stock threshold, maximum products, and default category. Values may vary
   by Spring profile or environment variable override.
-- **Repository** — persistence boundary abstraction. The exercise uses an
-  in-memory `ConcurrentHashMap` implementation; callers depend on the interface.
+- **Repository** — Spring Data JPA persistence boundary (`ProductRepository`) with
+  Specifications for filtered queries. Flyway owns schema; Hibernate validates only.
 - **Service** — owns business rules (SKU uniqueness, product limits, mapping).
   Controllers delegate here; repositories do not enforce business rules.
 - **Controller** — HTTP adapter only. Validates request shape via Bean

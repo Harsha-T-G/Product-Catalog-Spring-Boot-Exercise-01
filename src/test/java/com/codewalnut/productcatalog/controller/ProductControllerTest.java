@@ -2,6 +2,8 @@ package com.codewalnut.productcatalog.controller;
 
 import com.codewalnut.productcatalog.dto.ProductRequest;
 import com.codewalnut.productcatalog.repository.ProductRepository;
+import com.codewalnut.productcatalog.support.ProductTestFixtures;
+import com.codewalnut.productcatalog.support.PostgreSqlTestSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -28,7 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class ProductControllerTest {
+@ActiveProfiles("test")
+class ProductControllerTest extends PostgreSqlTestSupport {
 
     @Autowired
     private MockMvc mockMvc;
@@ -41,7 +45,7 @@ class ProductControllerTest {
 
     @BeforeEach
     void clearProducts() {
-        productRepository.findAll().forEach(product -> productRepository.deleteById(product.getId()));
+        productRepository.deleteAll();
     }
 
     @Test
@@ -88,6 +92,27 @@ class ProductControllerTest {
     }
 
     @Test
+    void givenMalformedJson_whenCreateProduct_thenReturns400() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{invalid-json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Malformed request body"));
+    }
+
+    @Test
+    void givenPriceWithTooManyDecimals_whenCreateProduct_thenReturns400() throws Exception {
+        ProductRequest request = validRequest("SKU-PREC");
+        request.setPrice(new BigDecimal("1.999"));
+
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field=='price')]").exists());
+    }
+
+    @Test
     void givenMissingProduct_whenGetById_thenReturns404ErrorEnvelope() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/products/{id}", UUID.randomUUID()))
@@ -118,11 +143,89 @@ class ProductControllerTest {
     }
 
     @Test
-    void givenUnsupportedMethod_whenPatchProducts_thenReturns405() throws Exception {
+    void givenUnsupportedMethod_whenPatchCollection_thenReturns405() throws Exception {
         // Act & Assert
         mockMvc.perform(patch("/api/products"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(jsonPath("$.status").value(405));
+    }
+
+    @Test
+    void givenNegativePage_whenListProducts_thenReturns400() throws Exception {
+        mockMvc.perform(get("/api/products").param("page", "-1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void givenInvalidPageSize_whenListProducts_thenReturns400() throws Exception {
+        mockMvc.perform(get("/api/products").param("size", "100"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void givenInvalidSortField_whenListProducts_thenReturns400() throws Exception {
+        mockMvc.perform(get("/api/products").param("sort", "invalid,asc"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void givenProducts_whenFilterByCategory_thenReturnsMatchingPage() throws Exception {
+        createProductWithCategory("SKU-A", "Electronics");
+        createProductWithCategory("SKU-B", "Books");
+
+        mockMvc.perform(get("/api/products").param("category", "electronics"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].sku").value("SKU-A"));
+    }
+
+    @Test
+    void givenProduct_whenIncreaseStock_thenReturnsUpdatedQuantity() throws Exception {
+        String id = createProduct("SKU-STOCK-UP");
+
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"adjustment\":5}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(15));
+    }
+
+    @Test
+    void givenProduct_whenDecreaseStock_thenReturnsUpdatedQuantity() throws Exception {
+        String id = createProduct("SKU-STOCK-DOWN");
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"adjustment\":5}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"adjustment\":-3}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(12));
+    }
+
+    @Test
+    void givenInsufficientStock_whenAdjustStock_thenReturns400AndPreservesQuantity() throws Exception {
+        String id = createProduct("SKU-LOW");
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"adjustment\":-100}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(10));
+    }
+
+    @Test
+    void givenZeroAdjustment_whenAdjustStock_thenReturns400() throws Exception {
+        String id = createProduct("SKU-ZERO");
+
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"adjustment\":0}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -152,12 +255,14 @@ class ProductControllerTest {
     }
 
     @Test
-    void givenNoProducts_whenListProducts_thenReturnsEmptyArray() throws Exception {
+    void givenNoProducts_whenListProducts_thenReturnsEmptyPage() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test
@@ -190,6 +295,17 @@ class ProductControllerTest {
         assertFalse(body.get("active").asBoolean());
     }
 
+    private String createProductWithCategory(String sku, String category) throws Exception {
+        ProductRequest request = validRequest(sku);
+        request.setCategory(category);
+        MvcResult result = mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+    }
+
     private String createProduct(String sku) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/products")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -200,13 +316,6 @@ class ProductControllerTest {
     }
 
     private ProductRequest validRequest(String sku) {
-        ProductRequest request = new ProductRequest();
-        request.setSku(sku);
-        request.setName("Sample Product");
-        request.setCategory("General");
-        request.setPrice(new BigDecimal("19.99"));
-        request.setStockQuantity(10);
-        request.setActive(true);
-        return request;
+        return ProductTestFixtures.validProductRequest(sku);
     }
 }

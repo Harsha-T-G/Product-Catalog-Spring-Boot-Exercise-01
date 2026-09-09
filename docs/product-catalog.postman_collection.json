@@ -1,0 +1,388 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Product Catalog API",
+    "description": "Week 6 Spring Boot Product Catalog with PostgreSQL — import and run against `./mvnw spring-boot:run` with Docker Compose + `.env` (default port 8080).\n\n**Variables**\n- `baseUrl` — API root (default `http://localhost:8080`)\n- `productId` — set automatically after **Create Product**",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "productId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Info",
+      "item": [
+        {
+          "name": "Get Application Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/info",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "info"]
+            },
+            "description": "Returns application name, version, and status from configuration."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Actuator",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health"]
+            },
+            "description": "Spring Boot Actuator health endpoint. Expect status UP."
+          },
+          "response": []
+        },
+        {
+          "name": "Application Info (Actuator)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/info",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "info"]
+            },
+            "description": "Actuator info with app name and version."
+          },
+          "response": []
+        },
+        {
+          "name": "Env (Not Exposed — expect 404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/env",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "env"]
+            },
+            "description": "Only health and info are exposed. This should return 404."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('productId', body.id);",
+                  "    pm.test('Product created with id', function () {",
+                  "        pm.expect(body.id).to.be.a('string');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"SKU-001\",\n  \"name\": \"Sample Product\",\n  \"category\": \"General\",\n  \"price\": 19.99,\n  \"stockQuantity\": 10,\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Creates a product. Saves returned `id` into the `productId` collection variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Low-Stock Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"LOW-001\",\n  \"name\": \"Low Stock Item\",\n  \"category\": \"General\",\n  \"price\": 9.99,\n  \"stockQuantity\": 2,\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Creates a product with low stock for testing GET /api/products/low-stock."
+          },
+          "response": []
+        },
+        {
+          "name": "List Products (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?page=0&size=10&sort=name,asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "10"},
+                {"key": "sort", "value": "name,asc"}
+              ]
+            },
+            "description": "Returns a page of products with metadata (content, page, size, totalElements, totalPages)."
+          },
+          "response": []
+        },
+        {
+          "name": "List Products (Filter + Paginate)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?category=Electronics&active=true&page=0&size=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                {"key": "category", "value": "Electronics"},
+                {"key": "active", "value": "true"},
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "5"}
+              ]
+            },
+            "description": "Case-insensitive category filter combined with pagination."
+          },
+          "response": []
+        },
+        {
+          "name": "List All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Returns the first page using the configured default page size."
+          },
+          "response": []
+        },
+        {
+          "name": "List Low-Stock Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/low-stock",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "low-stock"]
+            },
+            "description": "Active products where stockQuantity <= catalog.low-stock-threshold (default 5)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "Run **Create Product** first to populate `productId`, or paste a UUID manually."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"SKU-001-UPD\",\n  \"name\": \"Updated Product\",\n  \"category\": \"Electronics\",\n  \"price\": 24.99,\n  \"stockQuantity\": 15,\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "Updates an existing product. Requires `productId` from Create Product."
+          },
+          "response": []
+        },
+        {
+          "name": "Adjust Stock",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"adjustment\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/stock",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "stock"]
+            },
+            "description": "Adjust stock by delta. Positive adds, negative removes. Requires `productId` from Create Product."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "Deletes a product. Returns 204 No Content on success."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Error Scenarios",
+      "item": [
+        {
+          "name": "Validation Error (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"\",\n  \"name\": \"X\",\n  \"category\": \"General\",\n  \"price\": -1,\n  \"stockQuantity\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Invalid body — expect 400 with fieldErrors array."
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid UUID (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/not-a-uuid",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "not-a-uuid"]
+            },
+            "description": "Malformed path id — expect 400 Bad Request."
+          },
+          "response": []
+        },
+        {
+          "name": "Product Not Found (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/00000000-0000-0000-0000-000000000001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "00000000-0000-0000-0000-000000000001"]
+            },
+            "description": "Unknown product id — expect 404 with standard error envelope."
+          },
+          "response": []
+        },
+        {
+          "name": "Duplicate SKU (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"abc-001\",\n  \"name\": \"Duplicate Attempt\",\n  \"category\": \"General\",\n  \"price\": 19.99,\n  \"stockQuantity\": 10,\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Run **Create Product** first (SKU-001), then this request with abc-001 — expect 409 Conflict (case-insensitive SKU)."
+          },
+          "response": []
+        },
+        {
+          "name": "Method Not Allowed (405)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "PATCH is not supported — expect 405 Method Not Allowed."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

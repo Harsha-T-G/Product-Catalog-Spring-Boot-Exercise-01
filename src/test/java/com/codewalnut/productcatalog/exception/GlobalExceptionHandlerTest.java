@@ -2,8 +2,9 @@ package com.codewalnut.productcatalog.exception;
 
 import com.codewalnut.productcatalog.dto.ErrorResponse;
 import com.codewalnut.productcatalog.dto.FieldErrorDetail;
-import jakarta.servlet.http.HttpServletRequest;
 import com.codewalnut.productcatalog.dto.ProductRequest;
+import com.codewalnut.productcatalog.entity.ProductEntity;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -23,7 +26,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,7 +58,7 @@ class GlobalExceptionHandlerTest {
         assertNotNull(body);
         assertEquals(404, body.getStatus());
         assertEquals("/api/products", body.getPath());
-        assertNull(body.getFieldErrors());
+        assertTrue(body.getFieldErrors().isEmpty());
     }
 
     @Test
@@ -109,6 +112,64 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void givenMalformedBody_whenHandleUnreadableBody_thenReturns400() {
+        ResponseEntity<ErrorResponse> response = handler.handleUnreadableBody(
+                new HttpMessageNotReadableException("Invalid JSON"), request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Malformed request body", response.getBody().getMessage());
+        assertEquals("/api/products", response.getBody().getPath());
+    }
+
+    @Test
+    void givenOptimisticLockFailure_whenHandle_thenReturns409ErrorEnvelope() {
+        ResponseEntity<ErrorResponse> response = handler.handleOptimisticLockingFailure(
+                new ObjectOptimisticLockingFailureException(ProductEntity.class, UUID.randomUUID()), request);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals(409, response.getBody().getStatus());
+        assertEquals("Product was updated by another transaction", response.getBody().getMessage());
+    }
+
+    @Test
+    void givenProductLimitReached_whenHandle_thenReturns409ErrorEnvelope() {
+        ResponseEntity<ErrorResponse> response = handler.handleProductLimitReached(
+                new ProductLimitReachedException(20), request);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals(409, response.getBody().getStatus());
+        assertEquals("/api/products", response.getBody().getPath());
+    }
+
+    @Test
+    void givenInvalidPagination_whenHandle_thenReturns400ErrorEnvelope() {
+        ResponseEntity<ErrorResponse> response = handler.handleInvalidPagination(
+                new InvalidPaginationException("Page size must be between 1 and 10"), request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Page size must be between 1 and 10", response.getBody().getMessage());
+    }
+
+    @Test
+    void givenInsufficientStock_whenHandle_thenReturns400ErrorEnvelope() {
+        ResponseEntity<ErrorResponse> response = handler.handleInsufficientStock(
+                new InsufficientStockException(), request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("/api/products", response.getBody().getPath());
+    }
+
+    @Test
+    void givenInvalidSortDirection_whenHandle_thenReturns400ErrorEnvelope() {
+        ResponseEntity<ErrorResponse> response = handler.handleInvalidSortDirection(
+                new InvalidSortDirectionException("sideways"), request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Invalid sort direction 'sideways'. Use asc or desc.", response.getBody().getMessage());
+        assertTrue(response.getBody().getFieldErrors().isEmpty());
+    }
+
+    @Test
     void givenUnsupportedMethod_whenHandle_thenReturns405() {
         // Act
         ResponseEntity<ErrorResponse> response = handler.handleMethodNotSupported(
@@ -128,5 +189,6 @@ class GlobalExceptionHandlerTest {
         // Assert
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals("An unexpected error occurred", response.getBody().getMessage());
+        assertNotNull(response.getBody().getErrorReferenceId());
     }
 }

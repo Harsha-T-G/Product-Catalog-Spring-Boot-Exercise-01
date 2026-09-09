@@ -73,6 +73,6 @@ Default server port: 8080 (override with `server.port` in yaml if needed).
 ## What not to add
 
 - Spring Data JPA, `@Entity`, or datasource configuration
-- Lombok (`@Data`, `@Builder`, etc.)
+- Prefer `@Getter` / `@Setter` or `@Value` on DTOs; use `@Getter` `@Setter` on entities (not `@Data`).
 - Spring Security (unless exercise scope expands)
 - Custom embedded server configuration beyond exercise requirements

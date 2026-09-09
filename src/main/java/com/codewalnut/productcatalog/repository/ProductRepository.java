@@ -1,24 +1,22 @@
 package com.codewalnut.productcatalog.repository;
 
-import com.codewalnut.productcatalog.model.Product;
+import com.codewalnut.productcatalog.entity.ProductEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ProductRepository {
-
-    Product save(Product product);
-
-    Optional<Product> findById(UUID id);
-
-    List<Product> findAll();
+public interface ProductRepository extends JpaRepository<ProductEntity, UUID>, JpaSpecificationExecutor<ProductEntity> {
 
     boolean existsBySkuIgnoreCase(String sku);
 
-    boolean existsBySkuIgnoreCaseExcludingId(String sku, UUID excludeId);
+    boolean existsBySkuIgnoreCaseAndIdNot(String sku, UUID id);
 
-    void deleteById(UUID id);
+    Optional<ProductEntity> findBySkuIgnoreCase(String sku);
 
-    int count();
+    List<ProductEntity> findByActiveTrueAndStockQuantityLessThanEqual(int threshold);
+
+    List<ProductEntity> findByCategoryIgnoreCase(String category);
 }

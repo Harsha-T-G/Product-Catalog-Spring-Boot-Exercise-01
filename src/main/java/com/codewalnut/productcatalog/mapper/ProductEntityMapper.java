@@ -2,16 +2,16 @@ package com.codewalnut.productcatalog.mapper;
 
 import com.codewalnut.productcatalog.dto.ProductRequest;
 import com.codewalnut.productcatalog.dto.ProductResponse;
-import com.codewalnut.productcatalog.model.Product;
+import com.codewalnut.productcatalog.entity.ProductEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 @Component
-public class ProductMapper {
+public class ProductEntityMapper {
 
-    public Product toNewProduct(ProductRequest request, UUID id) {
-        return new Product(
+    public ProductEntity toNewEntity(UUID id, ProductRequest request) {
+        return new ProductEntity(
                 id,
                 request.getSku(),
                 request.getName(),
@@ -21,9 +21,8 @@ public class ProductMapper {
                 request.isActive());
     }
 
-    public Product toUpdatedProduct(UUID id, ProductRequest request) {
-        return new Product(
-                id,
+    public void applyUpdate(ProductEntity entity, ProductRequest request) {
+        entity.applyRequestFields(
                 request.getSku(),
                 request.getName(),
                 request.getCategory(),
@@ -32,14 +31,16 @@ public class ProductMapper {
                 request.isActive());
     }
 
-    public ProductResponse toResponse(Product product) {
+    public ProductResponse toResponse(ProductEntity entity) {
         return new ProductResponse(
-                product.getId(),
-                product.getSku(),
-                product.getName(),
-                product.getCategory(),
-                product.getPrice(),
-                product.getStockQuantity(),
-                product.isActive());
+                entity.getId(),
+                entity.getSku(),
+                entity.getName(),
+                entity.getCategory(),
+                entity.getPrice(),
+                entity.getStockQuantity(),
+                entity.isActive(),
+                entity.getCreatedAt(),
+                entity.getUpdatedAt());
     }
 }

@@ -1,5 +1,6 @@
 package com.codewalnut.productcatalog;
 
+import com.codewalnut.productcatalog.support.PostgreSqlTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -12,17 +13,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class ActuatorEndpointTest {
+class ActuatorEndpointTest extends PostgreSqlTestSupport {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    void givenRunningApplication_whenHealthEndpointCalled_thenReturnsUp() throws Exception {
+    void givenRunningApplication_whenHealthEndpointCalled_thenReturnsUpWithDatabase() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/actuator/health"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("UP"));
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.components.db.status").value("UP"));
     }
 
     @Test
