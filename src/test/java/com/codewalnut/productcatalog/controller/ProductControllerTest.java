@@ -2,16 +2,19 @@ package com.codewalnut.productcatalog.controller;
 
 import com.codewalnut.productcatalog.dto.ProductRequest;
 import com.codewalnut.productcatalog.repository.ProductRepository;
+import com.codewalnut.productcatalog.security.RequestTraceFilter;
 import com.codewalnut.productcatalog.support.ProductTestFixtures;
 import com.codewalnut.productcatalog.support.PostgreSqlTestSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -27,11 +30,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@WithMockUser(username = "controller-admin", roles = "ADMIN")
 class ProductControllerTest extends PostgreSqlTestSupport {
 
     @Autowired
@@ -56,6 +61,7 @@ class ProductControllerTest extends PostgreSqlTestSupport {
                         .content(objectMapper.writeValueAsString(validRequest("SKU-001"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.sku").value("SKU-001"))
+                .andExpect(jsonPath("$.version").value(0))
                 .andReturn();
 
         // Assert
@@ -125,13 +131,17 @@ class ProductControllerTest extends PostgreSqlTestSupport {
     void givenDuplicateSku_whenCreateProduct_thenReturns409ErrorEnvelope() throws Exception {
         // Arrange
         createProduct("ABC-001");
+        String traceId = "bfe4cd2c-0aac-45bb-8aca-e6176a646705";
 
         // Act & Assert
         mockMvc.perform(post("/api/products")
+                        .header(RequestTraceFilter.TRACE_HEADER, traceId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest("abc-001"))))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value(409));
+                .andExpect(header().string(RequestTraceFilter.TRACE_HEADER, traceId))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.traceId").value(traceId));
     }
 
     @Test
@@ -208,10 +218,14 @@ class ProductControllerTest extends PostgreSqlTestSupport {
     @Test
     void givenInsufficientStock_whenAdjustStock_thenReturns400AndPreservesQuantity() throws Exception {
         String id = createProduct("SKU-LOW");
+        String traceId = "c852163d-c4a7-447b-8617-9b8da9434839";
         mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .header(RequestTraceFilter.TRACE_HEADER, traceId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"adjustment\":-100}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string(RequestTraceFilter.TRACE_HEADER, traceId))
+                .andExpect(jsonPath("$.traceId").value(traceId));
 
         mockMvc.perform(get("/api/products/{id}", id))
                 .andExpect(status().isOk())
@@ -252,6 +266,25 @@ class ProductControllerTest extends PostgreSqlTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sku").value("SKU-301"))
                 .andExpect(jsonPath("$.id").value(id));
+    }
+
+    @Test
+    void givenStaleVersion_whenUpdatingProduct_thenReturns409() throws Exception {
+        String id = createProduct("SKU-VERSION");
+        MvcResult current = mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isOk())
+                .andReturn();
+        long currentVersion = objectMapper.readTree(current.getResponse().getContentAsString())
+                .get("version")
+                .asLong();
+        ObjectNode staleUpdate = objectMapper.valueToTree(validRequest("SKU-VERSION"));
+        staleUpdate.put("version", currentVersion + 1);
+
+        mockMvc.perform(put("/api/products/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(staleUpdate)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
     }
 
     @Test

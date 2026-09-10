@@ -42,4 +42,6 @@ public class ProductRequest {
     private int stockQuantity;
 
     private boolean active = true;
+
+    private Long version;
 }

@@ -40,6 +40,7 @@ public class ProductEntityMapper {
                 entity.getPrice(),
                 entity.getStockQuantity(),
                 entity.isActive(),
+                entity.getVersion(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt());
     }

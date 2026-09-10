@@ -1,9 +1,10 @@
 # Product Catalog API
 
 Spring Boot REST API for product management with PostgreSQL persistence,
-Flyway migrations, pagination, filtering, and stock adjustment.
+Flyway migrations, database-backed HTTP Basic authentication, pagination,
+filtering, and stock adjustment.
 
-**Status:** Week 6 complete (Exercises 1–6).
+**Status:** Week 7 implementation and Java 21 verification complete; PR publication remains pending.
 
 ## Prerequisites
 
@@ -20,7 +21,8 @@ docker info   # Docker must be running
 ```
 
 Tests spin up a shared PostgreSQL 16 container automatically via Testcontainers.
-**93 tests** must pass — see [docs/test-evidence.txt](docs/test-evidence.txt).
+**157 tests** must pass. Week 7 RED→GREEN results are recorded in
+[docs/tdd-evidence.md](docs/tdd-evidence.md).
 
 ### Troubleshooting: Docker / Testcontainers errors
 
@@ -54,13 +56,14 @@ Spring is using the literal placeholder because **`DB_PASSWORD` (and optionally 
 ./scripts/run-dev.sh
 ```
 
-This runs `docker compose down -v` and recreates Postgres so `root` / `root@123` from `.env` are applied.
+This runs `docker compose down -v` and recreates Postgres using the credentials
+you placed in `.env`.
 
 **Fix (IntelliJ / IDE):** In the run configuration, add environment variables from `.env`:
 
 - `DB_URL=jdbc:postgresql://localhost:5432/product_catalog`
 - `DB_USERNAME=root`
-- `DB_PASSWORD=root@123`
+- `DB_PASSWORD=<your local database password>`
 
 Active profile: **`dev`**
 
@@ -70,7 +73,8 @@ Active profile: **`dev`**
 
 ```bash
 cp .env.example .env
-# Local defaults: user root, password root@123 (already in .env.example)
+# Fill in POSTGRES_PASSWORD and DB_PASSWORD; keep them equal for local Compose.
+# Optionally fill all three CATALOG_*_PASSWORD values to seed dev users.
 ```
 
 2. Start PostgreSQL:
@@ -119,10 +123,18 @@ Default port: **8080**. PostgreSQL: **5432**.
 | Variable | Purpose |
 |----------|---------|
 | `DB_URL` | JDBC URL (default in dev profile: `jdbc:postgresql://localhost:5432/product_catalog`) |
-| `DB_USERNAME` | Application database user (local default: `root`) |
-| `DB_PASSWORD` | Application password (local default in `.env.example`: `root@123`) |
+| `DB_USERNAME` | Required application database user (`root` for the supplied Compose service) |
+| `DB_PASSWORD` | Required application database password; no committed default |
 | `POSTGRES_PASSWORD` | Used by Docker Compose to initialize the container user (must match `DB_PASSWORD`) |
 | `CATALOG_MAXIMUM_PRODUCTS` | Optional override for catalog size limit (default 500) |
+| `CATALOG_VIEWER_PASSWORD` | Dev-only VIEWER password; seeding requires all three role passwords |
+| `CATALOG_EDITOR_PASSWORD` | Dev-only EDITOR password; seeding requires all three role passwords |
+| `CATALOG_ADMIN_PASSWORD` | Dev-only ADMIN password; seeding requires all three role passwords |
+
+The corresponding usernames default to `viewer`, `editor`, and `admin` and may
+be overridden with `CATALOG_VIEWER_USERNAME`, `CATALOG_EDITOR_USERNAME`, and
+`CATALOG_ADMIN_USERNAME`. If any sample-user password is absent, no sample users
+are created.
 
 If the database is unavailable, the application fails at startup with a clear
 connection error. No credentials belong in Git — use `.env` (gitignored) or your
@@ -133,7 +145,9 @@ shell environment.
 - `spring.jpa.hibernate.ddl-auto=validate` — Hibernate never creates or alters tables.
 - Flyway owns schema changes under `src/main/resources/db/migration/`.
 - **V1__create_products_table.sql** — creates `products` with constraints and case-insensitive SKU index.
-- On first start against an empty database, Flyway applies V1; subsequent starts skip already-applied migrations.
+- **V2__create_security_tables.sql** — creates users, roles, mappings, and the case-insensitive username index.
+- On first start against an empty database, Flyway applies both migrations;
+  subsequent starts skip already-applied migrations.
 
 ## Profiles
 
@@ -143,31 +157,48 @@ shell environment.
 | dev | `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev` + `.env` | PostgreSQL (Docker Compose) | 10 | 1000 | 20 |
 | test | `./mvnw test` (automatic) | PostgreSQL Testcontainers | 2 | 20 | 5 |
 
-## Endpoint table
+## Security design and permissions
 
-| Method | Path | Status | Purpose |
-|--------|------|--------|---------|
-| GET | `/api/info` | 200 | Application metadata |
-| GET | `/actuator/health` | 200 | Health check (includes `db` component) |
-| GET | `/actuator/info` | 200 | Build info |
-| POST | `/api/products` | 201 | Create product |
-| GET | `/api/products` | 200 | Paginated, filterable product list |
-| GET | `/api/products/low-stock` | 200 | Active low-stock products |
-| GET | `/api/products/{id}` | 200 | Get one product |
-| PUT | `/api/products/{id}` | 200 | Update product |
-| PATCH | `/api/products/{id}/stock` | 200 | Adjust stock by delta |
-| DELETE | `/api/products/{id}` | 204 | Delete product |
+The API uses stateless HTTP Basic authentication. Users, BCrypt password hashes,
+and canonical roles are stored in PostgreSQL; Spring Security loads current
+account state on each request. Request rules are restrictive by default, and
+product deletion plus ADMIN user operations also have service-level method
+security as defense in depth.
 
-Error responses: **400** validation / business rule, **404** not found, **405** method not allowed, **409** conflict (duplicate SKU or optimistic lock), **500** unexpected.
+| Method and path | Public | VIEWER | EDITOR | ADMIN |
+| --- | ---: | ---: | ---: | ---: |
+| `GET /api/info`, `GET /actuator/health` | ✓ | ✓ | ✓ | ✓ |
+| Product GET endpoints | — | ✓ | ✓ | ✓ |
+| `POST /api/products`, product `PUT`, stock `PATCH` | — | — | ✓ | ✓ |
+| `DELETE /api/products/{id}` | — | — | — | ✓ |
+| `POST /api/admin/users` | — | — | — | ✓ |
+| `PATCH /api/admin/users/{username}/enabled` | — | — | — | ✓ |
+| `/actuator/info`, OpenAPI, Swagger UI | — | ✓ | ✓ | ✓ |
+| Any unlisted route | — | Authenticated, then normal routing | Authenticated, then normal routing | Authenticated, then normal routing |
+
+Missing or invalid credentials return **401** with a Basic challenge.
+Authenticated users without permission receive **403**. Application and
+security failures share `timestamp`, `status`, `error`, `message`, `path`,
+`traceId`, and `fieldErrors`. Error responses never include stack traces, SQL
+details, entity internals, passwords, or password hashes.
 
 Only **health** and **info** actuator endpoints are exposed. Health reports database availability without leaking credentials.
 
 ## Sample requests
 
-**Create product** — `price` must be greater than zero with at most **17 integer digits and 2 decimal places** (matches PostgreSQL `NUMERIC(19,2)`).
+Set local credentials without writing their values into tracked files:
+
+```bash
+export CATALOG_ADMIN_USERNAME=admin
+read -s CATALOG_ADMIN_PASSWORD && export CATALOG_ADMIN_PASSWORD
+```
+
+**Create product as ADMIN** — `price` must be greater than zero with at most
+**17 integer digits and 2 decimal places** (matches PostgreSQL `NUMERIC(19,2)`).
 
 ```bash
 curl -X POST http://localhost:8080/api/products \
+  -u "${CATALOG_ADMIN_USERNAME}:${CATALOG_ADMIN_PASSWORD}" \
   -H "Content-Type: application/json" \
   -d '{"sku":"SKU-001","name":"Sample","category":"General","price":19.99,"stockQuantity":10,"active":true}'
 ```
@@ -175,7 +206,8 @@ curl -X POST http://localhost:8080/api/products \
 **Paginated list with sorting**
 
 ```bash
-curl "http://localhost:8080/api/products?page=0&size=10&sort=name,asc"
+curl -u "${CATALOG_ADMIN_USERNAME}:${CATALOG_ADMIN_PASSWORD}" \
+  "http://localhost:8080/api/products?page=0&size=10&sort=name,asc"
 ```
 
 Response shape:
@@ -193,7 +225,8 @@ Response shape:
 **Filter + paginate**
 
 ```bash
-curl "http://localhost:8080/api/products?category=Electronics&active=true&page=0&size=5&sort=price,desc"
+curl -u "${CATALOG_ADMIN_USERNAME}:${CATALOG_ADMIN_PASSWORD}" \
+  "http://localhost:8080/api/products?category=Electronics&active=true&page=0&size=5&sort=price,desc"
 ```
 
 Allowed sort fields: `name`, `price`, `category`, `createdAt`, `stockQuantity`.
@@ -202,6 +235,7 @@ Allowed sort fields: `name`, `price`, `category`, `createdAt`, `stockQuantity`.
 
 ```bash
 curl -X PATCH http://localhost:8080/api/products/{id}/stock \
+  -u "${CATALOG_ADMIN_USERNAME}:${CATALOG_ADMIN_PASSWORD}" \
   -H "Content-Type: application/json" \
   -d '{"adjustment":-3}'
 ```
@@ -210,9 +244,58 @@ curl -X PATCH http://localhost:8080/api/products/{id}/stock \
 
 ```bash
 curl -X POST http://localhost:8080/api/products \
+  -u "${CATALOG_ADMIN_USERNAME}:${CATALOG_ADMIN_PASSWORD}" \
   -H "Content-Type: application/json" \
   -d '{"sku":"","name":"X","category":"General","price":-1,"stockQuantity":0}'
 ```
+
+**Create a VIEWER as ADMIN**
+
+```bash
+read -s NEW_USER_PASSWORD && export NEW_USER_PASSWORD
+jq -n --arg password "$NEW_USER_PASSWORD" \
+  '{username:"catalog-reader",password:$password,roles:["VIEWER"]}' | \
+curl -X POST http://localhost:8080/api/admin/users \
+  -u "${CATALOG_ADMIN_USERNAME}:${CATALOG_ADMIN_PASSWORD}" \
+  -H "Content-Type: application/json" --data-binary @-
+```
+
+**401 and 403 examples**
+
+```bash
+# 401: no credentials
+curl -i http://localhost:8080/api/products
+
+# 403: authenticated VIEWER attempts a write
+export CATALOG_VIEWER_USERNAME="${CATALOG_VIEWER_USERNAME:-viewer}"
+read -s CATALOG_VIEWER_PASSWORD && export CATALOG_VIEWER_PASSWORD
+curl -i -X POST http://localhost:8080/api/products \
+  -u "${CATALOG_VIEWER_USERNAME}:${CATALOG_VIEWER_PASSWORD}" \
+  -H "Content-Type: application/json" \
+  -d '{"sku":"DENIED-1","name":"Denied","category":"General","price":1.00,"stockQuantity":0,"active":true}'
+```
+
+Both responses are JSON error envelopes. The 401 also returns
+`WWW-Authenticate: Basic ...`.
+
+### Trace IDs and safe logging
+
+Every response contains `X-Trace-Id`. A canonical UUID supplied by the client is
+reused; a missing or invalid value is replaced with a generated UUID. The same
+value appears in error JSON and request-completion logs.
+
+```bash
+TRACE_ID=7046bd93-568f-49ae-ac1d-9d5be793f720
+curl -i http://localhost:8080/api/products \
+  -u "${CATALOG_ADMIN_USERNAME}:${CATALOG_ADMIN_PASSWORD}" \
+  -H "X-Trace-Id: ${TRACE_ID}"
+```
+
+Logs contain method, safe path, status, duration, trace ID, and authenticated
+username when available. Authorization values, passwords/hashes, database
+credentials, complete sensitive request bodies, SQL failure details, and normal
+4xx stack traces are excluded. See
+[docs/debugging-notes.md](docs/debugging-notes.md) for the required scenarios.
 
 See [docs/curl-commands.sh](docs/curl-commands.sh) for a runnable script and
 [docs/product-catalog.postman_collection.json](docs/product-catalog.postman_collection.json) for Postman.
@@ -231,24 +314,21 @@ See [docs/diagrams/week6-architecture.md](docs/diagrams/week6-architecture.md):
 
 ```text
 com.codewalnut.productcatalog/
-├── controller/   InfoController, ProductController
-├── service/      ProductService, ProductPageRequestFactory
-├── repository/   ProductRepository, ProductSpecifications
-├── entity/       ProductEntity
+├── controller/   Product, info, and ADMIN user HTTP adapters
+├── service/      Product and user business rules
+├── repository/   Product, user, and role persistence
+├── entity/       Product, user, and role JPA models
 ├── dto/          Request/response and error payloads
 ├── mapper/       ProductEntityMapper
 ├── exception/    Domain exceptions, GlobalExceptionHandler
-└── config/       CatalogProperties
+├── config/       Catalog and security configuration
+└── security/     Database identity, filters, and security error adapters
 ```
 
-## Week 6 branches
+## Active branch
 
 ```text
-task14-main
-  └── week6-exercise-1-postgresql-config   (Ex 1–3: PostgreSQL, Flyway, JPA)
-        └── week6-exercise-4-api-features  (Ex 4: pagination, filter, stock PATCH)
-              └── week6-exercise-5-database-tests  (Ex 5: repository & integration tests)
-                    └── week6-exercise-6-docs-delivery  (Ex 6: docs & evidence)
+week7-security-logging
 ```
 
 ## Agentic workflow
@@ -261,6 +341,10 @@ task14-main
 | Self review | [SELF_REVIEW.md](SELF_REVIEW.md) |
 | Week 6 implementation flow | [docs/week6-implementation-flow.md](docs/week6-implementation-flow.md) |
 | Test evidence | [docs/test-evidence.txt](docs/test-evidence.txt) |
+| Week 7 security contract | [docs/security-spec.md](docs/security-spec.md) |
+| Week 7 debugging notes | [docs/debugging-notes.md](docs/debugging-notes.md) |
+| Week 7 TDD evidence | [docs/tdd-evidence.md](docs/tdd-evidence.md) |
+| Week 7 verification matrix | [docs/week7-verification.md](docs/week7-verification.md) |
 
 ## Tests
 
@@ -270,3 +354,16 @@ task14-main
 ./mvnw -Dtest=ProductServiceIntegrationTest test
 ./mvnw -Dtest=ProductIntegrationTest test
 ```
+
+The final local gate passed all 157 tests on OpenJDK 21.0.12.1 while compiling
+with `javac --release 21`.
+
+## Security limitations and future improvements
+
+- HTTP Basic should be used only behind TLS; this PoC does not configure TLS.
+- There is no rate limiting, account lockout, password reset/rotation workflow,
+  MFA, or persistent audit-event store.
+- Dev users are seeded only when all three role passwords are supplied; production
+  identity provisioning needs an external secret manager and controlled workflow.
+- JWT or an external identity provider is intentionally deferred until all
+  required HTTP Basic behavior is complete.

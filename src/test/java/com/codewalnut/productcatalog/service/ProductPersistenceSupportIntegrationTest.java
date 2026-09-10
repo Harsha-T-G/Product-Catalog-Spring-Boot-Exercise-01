@@ -5,8 +5,11 @@ import com.codewalnut.productcatalog.exception.DuplicateSkuException;
 import com.codewalnut.productcatalog.support.PostgreSqlTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -14,10 +17,12 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@ExtendWith(OutputCaptureExtension.class)
 class ProductPersistenceSupportIntegrationTest extends PostgreSqlTestSupport {
 
     @Autowired
@@ -32,7 +37,8 @@ class ProductPersistenceSupportIntegrationTest extends PostgreSqlTestSupport {
     }
 
     @Test
-    void givenDuplicateSku_whenSaveAndFlush_thenThrowsDuplicateSkuException() {
+    void givenDuplicateSku_whenSaveAndFlush_thenThrowsDuplicateSkuExceptionWithoutSqlDetails(
+            CapturedOutput output) {
         productPersistenceSupport.saveAndFlush(newProduct("SKU-A"), "SKU-A");
 
         DuplicateSkuException exception = assertThrows(
@@ -40,16 +46,20 @@ class ProductPersistenceSupportIntegrationTest extends PostgreSqlTestSupport {
                 () -> productPersistenceSupport.saveAndFlush(newProduct("sku-a"), "sku-a"));
 
         assertEquals("Product with SKU already exists: sku-a", exception.getMessage());
+        assertFalse(output.getOut().contains("products_sku_unique_lower"));
+        assertFalse(output.getErr().contains("products_sku_unique_lower"));
     }
 
     @Test
-    void givenNegativeStock_whenSaveAndFlush_thenRethrowsDataIntegrityViolationException() {
+    void givenNegativeStock_whenSaveAndFlush_thenRethrowsWithoutLoggingFailingRow(CapturedOutput output) {
         ProductEntity invalid = new ProductEntity(
                 UUID.randomUUID(), "BAD-1", "Bad", "General", new BigDecimal("1.00"), -1, true);
 
         assertThrows(
                 DataIntegrityViolationException.class,
                 () -> productPersistenceSupport.saveAndFlush(invalid, "BAD-1"));
+        assertFalse(output.getOut().contains("Failing row contains"));
+        assertFalse(output.getErr().contains("Failing row contains"));
     }
 
     private ProductEntity newProduct(String sku) {

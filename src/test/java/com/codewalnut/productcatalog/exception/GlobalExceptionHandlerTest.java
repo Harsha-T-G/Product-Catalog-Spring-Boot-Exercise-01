@@ -1,15 +1,20 @@
 package com.codewalnut.productcatalog.exception;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.codewalnut.productcatalog.dto.ErrorResponse;
 import com.codewalnut.productcatalog.dto.FieldErrorDetail;
 import com.codewalnut.productcatalog.dto.ProductRequest;
 import com.codewalnut.productcatalog.entity.ProductEntity;
+import com.codewalnut.productcatalog.security.RequestTraceFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +44,7 @@ class GlobalExceptionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new GlobalExceptionHandler();
+        handler = new GlobalExceptionHandler(new ErrorResponseFactory());
         when(request.getRequestURI()).thenReturn("/api/products");
     }
 
@@ -182,13 +187,30 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void givenUnexpectedException_whenHandle_thenReturns500WithoutInternalDetails() {
-        // Act
-        ResponseEntity<ErrorResponse> response = handler.handleUnexpected(
-                new RuntimeException("database password leaked"), request);
+        String traceId = "324a1a92-7d10-422b-8edf-62dc8b995348";
+        String sensitiveExceptionMessage = "database password leaked";
+        when(request.getAttribute(RequestTraceFilter.TRACE_ATTRIBUTE)).thenReturn(traceId);
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            // Act
+            ResponseEntity<ErrorResponse> response = handler.handleUnexpected(
+                    new RuntimeException(sensitiveExceptionMessage), request);
 
-        // Assert
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals("An unexpected error occurred", response.getBody().getMessage());
-        assertNotNull(response.getBody().getErrorReferenceId());
+            // Assert
+            assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+            assertEquals("An unexpected error occurred", response.getBody().getMessage());
+            assertEquals(traceId, response.getBody().getTraceId());
+            String logged = appender.list.get(0).getFormattedMessage();
+            assertTrue(logged.contains("event=unexpected_failure"));
+            assertTrue(logged.contains("traceId=" + traceId));
+            assertFalse(logged.contains(sensitiveExceptionMessage));
+            assertFalse(logged.contains("at com.codewalnut"));
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
     }
 }

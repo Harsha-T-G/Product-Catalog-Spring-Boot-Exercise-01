@@ -23,8 +23,10 @@ dependency injection, validation, centralized error handling, configuration
 profiles, Flyway migrations, JPA persistence, Testcontainers-backed testing, and
 Lombok for DTOs and entities.
 
-**Current status:** Week 6 complete on `week6-exercise-6-docs-delivery`
-(PostgreSQL, pagination, stock PATCH, database tests, docs).
+**Current status:** Week 6 is the approved baseline. Week 7 work is implemented
+on `week7-security-logging` through PLAN-W7-07 and 157 tests pass on Java
+21.0.12.1 with Java 21 release compilation. Commit and push are authorized and
+pending; pull-request creation remains pending separate authorization.
 
 ### Project path overrides (addyosmani defaults)
 
@@ -46,9 +48,9 @@ project. See `.agents/README.md`.
 | Situation | Skill(s) | Also read |
 | --- | --- | --- |
 | New project, feature, or unclear requirements | `spec-driven-development` | `SPEC.md`, affected spec chunk |
-| Breaking work into ordered tasks | `planning-and-task-breakdown` | `docs/plans/` |
+| Breaking work into ordered tasks | `spec-driven-development` Phase 3 | approved plan in `docs/plans/` |
 | Implementation or bug fix (production behavior) | `test-driven-development` | `.guidelines/java.md`, `.guidelines/spring-boot.md` |
-| Multi-file change landing incrementally | `incremental-implementation` | approved task from `docs/plans/product-catalog-tasks.md` |
+| Multi-file change landing incrementally | `test-driven-development` | one approved task from `docs/plans/product-catalog-tasks.md` |
 | API, validation, config, or error-handling detail | — | matching `docs/specs/product-catalog/` chunk in `SPEC.md` |
 | Domain terminology | — | `CONTEXT.md` |
 
@@ -69,7 +71,7 @@ SPEC.md           product contract index and approval status
 docs/specs/product-catalog/   capability contract chunks
 docs/plans/       implementation plan and tasks (after spec approval)
 CONTEXT.md        stable domain glossary
-.agents/skills/   bootstrap SKILL.md → fetch canonical skills from web
+.agents/skills/   complete vendored project skills; no external fetch required
 .guidelines/      stable stack conventions
 ```
 

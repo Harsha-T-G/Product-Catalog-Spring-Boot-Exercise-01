@@ -2,11 +2,17 @@ spring:
   config:
     activate:
       on-profile: dev
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/product_catalog}
-    username: ${DB_USERNAME:root}
-    password: "${DB_PASSWORD:root@123}"
-
 catalog:
   low-stock-threshold: 10
   maximum-products: 1000
+  security:
+    dev-users:
+      viewer:
+        username: ${CATALOG_VIEWER_USERNAME:viewer}
+        password: ${CATALOG_VIEWER_PASSWORD:}
+      editor:
+        username: ${CATALOG_EDITOR_USERNAME:editor}
+        password: ${CATALOG_EDITOR_PASSWORD:}
+      admin:
+        username: ${CATALOG_ADMIN_USERNAME:admin}
+        password: ${CATALOG_ADMIN_PASSWORD:}

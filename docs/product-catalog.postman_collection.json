@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "name": "Product Catalog API",
-    "description": "Week 6 Spring Boot Product Catalog with PostgreSQL — import and run against `./mvnw spring-boot:run` with Docker Compose + `.env` (default port 8080).\n\n**Variables**\n- `baseUrl` — API root (default `http://localhost:8080`)\n- `productId` — set automatically after **Create Product**",
+    "description": "Week 7 secured Spring Boot Product Catalog with PostgreSQL. Set local `username` and `password` collection variables for a seeded ADMIN before running protected requests. Do not save real credentials into a shared export.\n\n**Variables**\n- `baseUrl` — API root (default `http://localhost:8080`)\n- `username` / `password` — local HTTP Basic credentials\n- `productId` — set automatically after **Create Product**",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -13,8 +13,31 @@
     {
       "key": "productId",
       "value": ""
+    },
+    {
+      "key": "username",
+      "value": "admin"
+    },
+    {
+      "key": "password",
+      "value": ""
     }
   ],
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "{{username}}",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "{{password}}",
+        "type": "string"
+      }
+    ]
+  },
   "item": [
     {
       "name": "Info",
@@ -22,6 +45,9 @@
         {
           "name": "Get Application Info",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -41,6 +67,9 @@
         {
           "name": "Health Check",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {

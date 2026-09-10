@@ -58,4 +58,35 @@ class FlywayMigrationTest extends PostgreSqlTestSupport {
                 Integer.class);
         assertTrue(priceCheckCount >= 1);
     }
+
+    @Test
+    void givenEmptyDatabase_whenFlywayRuns_thenCreatesIdentitySchemaAndCanonicalRoles() {
+        // Assert
+        Integer migrationCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM flyway_schema_history WHERE version = '2'", Integer.class);
+        assertEquals(1, migrationCount);
+
+        Integer tableCount = jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*) FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_name IN ('app_users', 'roles', 'app_user_roles')
+                """,
+                Integer.class);
+        assertEquals(3, tableCount);
+
+        Integer usernameIndexCount = jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*) FROM pg_indexes
+                WHERE tablename = 'app_users'
+                  AND indexname = 'app_users_username_unique_lower'
+                """,
+                Integer.class);
+        assertEquals(1, usernameIndexCount);
+
+        Integer roleCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM roles WHERE name IN ('VIEWER', 'EDITOR', 'ADMIN')",
+                Integer.class);
+        assertEquals(3, roleCount);
+    }
 }

@@ -28,13 +28,12 @@ set -a
 source "$ENV_FILE"
 set +a
 
-if [[ -z "${DB_PASSWORD:-}" ]]; then
-  echo "ERROR: DB_PASSWORD is empty in $ENV_FILE." >&2
+if [[ -z "${DB_USERNAME:-}" || -z "${DB_PASSWORD:-}" ]]; then
+  echo "ERROR: DB_USERNAME and DB_PASSWORD must be set in $ENV_FILE." >&2
   exit 1
 fi
 
 export DB_URL="${DB_URL:-jdbc:postgresql://localhost:5432/product_catalog}"
-export DB_USERNAME="${DB_USERNAME:-root}"
-export DB_PASSWORD="${DB_PASSWORD:-root@123}"
+export DB_USERNAME DB_PASSWORD
 
 exec ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
