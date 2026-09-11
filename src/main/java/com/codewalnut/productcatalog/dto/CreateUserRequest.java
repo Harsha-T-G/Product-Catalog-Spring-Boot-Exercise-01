@@ -7,14 +7,20 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Getter
+@Setter
 public class CreateUserRequest {
 
     @NotBlank
     @Size(min = 3, max = 50)
+    @Setter(AccessLevel.NONE)
     private String username;
 
     @NotBlank
@@ -23,22 +29,12 @@ public class CreateUserRequest {
     private String password;
 
     @NotEmpty
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private Set<@Valid @NotNull ApplicationRole> roles = new LinkedHashSet<>();
-
-    public String getUsername() {
-        return username;
-    }
 
     public void setUsername(String username) {
         this.username = username == null ? null : username.trim();
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public Set<ApplicationRole> getRoles() {
