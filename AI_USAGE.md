@@ -7,7 +7,6 @@ Track material AI-assisted work for exercise submission and self-review.
 | Date | Phase | Prompt / intent | Outcome | Verified |
 | --- | --- | --- | --- | --- |
 | 2026-08-26 | Specify | Agentic boilerplate + draft spec/plan for Week 5 Spring Boot exercise | Created Task14-Product-Catalog scaffold, SPEC, plans, skills, guidelines | `./mvnw verify` pending |
-| 2026-09-09 | Scope check | Decompose the Week 7 Spring Security and logging brief | Created a six-module capability map on `week7-security-logging` from the Week 6 delivery baseline | Human approved module boundaries and build order |
 | 2026-09-09 | Specify | Define the `security-contract` module before adding Spring Security | Approved `docs/security-spec.md` and linked REQ-110–REQ-120 from `SPEC.md` | Human approved the contract and four security decisions |
 | 2026-09-09 | Plan | Design the Week 7 implementation sequence without mixing all capabilities into one change | Approved the dependency-ordered Week 7 initiative plan with TDD and regression checkpoints | Human approved the plan and implementation strategy |
 | 2026-09-09 | Tasks | Break the first security boundary into reviewable TDD slices | Approved TASK-W7-001 through TASK-W7-004 for the first RED, minimum security configuration, regression authentication, and verification | Human approved implementation start |
@@ -48,7 +47,6 @@ TASK-xxx:
 
 ## Open items
 
-- [x] Week 7 capability map approved
 - [x] Human approval of the `security-contract` specification
 - [x] Approve the Week 7 implementation plan
 - [x] Prepare and approve session-sized tasks

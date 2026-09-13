@@ -21,7 +21,7 @@ docker info   # Docker must be running
 ```
 
 Tests spin up a shared PostgreSQL 16 container automatically via Testcontainers.
-**157 tests** must pass. Week 7 RED→GREEN results are recorded in
+**158 tests** must pass. Week 7 RED→GREEN results are recorded in
 [docs/tdd-evidence.md](docs/tdd-evidence.md).
 
 ### Troubleshooting: Docker / Testcontainers errors
@@ -344,7 +344,6 @@ week7-security-logging
 | Week 7 security contract | [docs/security-spec.md](docs/security-spec.md) |
 | Week 7 debugging notes | [docs/debugging-notes.md](docs/debugging-notes.md) |
 | Week 7 TDD evidence | [docs/tdd-evidence.md](docs/tdd-evidence.md) |
-| Week 7 verification matrix | [docs/week7-verification.md](docs/week7-verification.md) |
 
 ## Tests
 
@@ -355,7 +354,7 @@ week7-security-logging
 ./mvnw -Dtest=ProductIntegrationTest test
 ```
 
-The final local gate passed all 157 tests on OpenJDK 21.0.12.1 while compiling
+The final local gate passed all 158 tests on OpenJDK 21.0.12.1 while compiling
 with `javac --release 21`.
 
 ## Security limitations and future improvements

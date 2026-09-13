@@ -28,8 +28,8 @@
     locally), not committed configuration files.
 12. Java 21 is the release target.
 13. API base path remains `/api/products` (no `/api/v1` in this exercise).
-14. Optional `version` on update/stock requests enables optimistic-lock
-    preconditions; omitting `version` allows last-write-wins on PUT.
+14. Product `version` is server-managed and returned in responses. POST and PUT
+    do not expose it; stock PATCH may optionally use it as a precondition.
 
 ## Objective
 
@@ -94,16 +94,12 @@ Package layout under `com.codewalnut.productcatalog`:
 | [05-configuration.md](docs/specs/product-catalog/05-configuration.md) | Profiles, limits, low-stock | REQ-070–REQ-080 |
 | [06-testing-health.md](docs/specs/product-catalog/06-testing-health.md) | Tests, Actuator, deliverables | REQ-090–REQ-100 |
 
-### Week 7 contract index
+### Week 7 contract
 
-| Module | Contract | Requirements | Status |
-| --- | --- | --- | --- |
-| `security-contract` | [docs/security-spec.md](docs/security-spec.md) | REQ-110–REQ-120 | Approved on 2026-09-09 |
-| `database-authentication` | [07-database-authentication.md](docs/specs/product-catalog/07-database-authentication.md) | REQ-121–REQ-129 | Implemented on 2026-09-09 |
-| `role-authorization` | [08-role-authorization.md](docs/specs/product-catalog/08-role-authorization.md) | REQ-130–REQ-137 | Implemented on 2026-09-09 |
-| `admin-user-management` | [09-admin-user-management.md](docs/specs/product-catalog/09-admin-user-management.md) | REQ-140–REQ-149 | Implemented on 2026-09-09; byte-limit hardening implemented on 2026-09-10 |
-| `request-observability` | [10-request-observability.md](docs/specs/product-catalog/10-request-observability.md) | REQ-150–REQ-163 | Implemented on 2026-09-10 |
-| `security-verification-delivery` | [11-security-verification-delivery.md](docs/specs/product-catalog/11-security-verification-delivery.md) | REQ-170–REQ-178 | Implemented on 2026-09-10 |
+The focused [security contract](docs/security-spec.md) defines the Week 7 role,
+endpoint, authentication, error, sensitive-data, and test-first boundaries. The
+exercise brief remains the detailed source for database authentication, user
+management, logging, debugging, integration tests, and required deliverables.
 
 ## Product data model
 
@@ -116,7 +112,7 @@ Package layout under `com.codewalnut.productcatalog`:
 | price | BigDecimal | Required; > 0; max 17 integer + 2 fraction digits |
 | stockQuantity | int | >= 0 |
 | active | boolean | Stored and returned as provided |
-| version | long | Optimistic lock; returned on GET; optional on PUT/PATCH stock |
+| version | long | Server-managed; returned in responses; optional only on stock PATCH |
 | createdAt / updatedAt | Instant | Server-managed timestamps |
 
 ## Open questions (resolved)

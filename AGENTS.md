@@ -24,9 +24,8 @@ profiles, Flyway migrations, JPA persistence, Testcontainers-backed testing, and
 Lombok for DTOs and entities.
 
 **Current status:** Week 6 is the approved baseline. Week 7 work is implemented
-on `week7-security-logging` through PLAN-W7-07 and 157 tests pass on Java
-21.0.12.1 with Java 21 release compilation. Commit and push are authorized and
-pending; pull-request creation remains pending separate authorization.
+on `week7-security-logging` through PLAN-W7-07 and 158 tests pass on Java
+21.0.12.1 with Java 21 release compilation.
 
 ### Project path overrides (addyosmani defaults)
 

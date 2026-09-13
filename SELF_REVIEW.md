@@ -59,21 +59,21 @@
 ## Feedback and process applied
 
 - Work stayed on the dedicated `week7-security-logging` branch.
-- Each capability received an approved spec, ordered plan, and independently
-  verifiable task before production behavior changed.
+- The focused Week 7 security contract, ordered plan, and independently
+  verifiable tasks were approved before production behavior changed.
 - Behavior changes followed focused RED→GREEN cycles; no failing assertion was
   deleted or weakened to obtain a green build.
 - Tests use public HTTP and PostgreSQL boundaries for security behavior, with
   focused unit tests retained for small adapters and MDC lifecycle rules.
-- No dependency, Java/Spring version, commit, push, or pull request was added
-  outside the user authorization boundary.
+- Dependencies, Java/Spring versions, commits, pushes, and pull-request changes
+  stayed within the user's authorization boundary.
 
 ## Verification
 
 ```text
 ./mvnw clean verify
 BUILD SUCCESS
-157 tests, 0 failures, 0 errors, 0 skipped
+158 tests, 0 failures, 0 errors, 0 skipped
 Executable JAR: target/product-catalog-1.0.0-SNAPSHOT.jar
 Compiler: javac --release 21
 Runtime: OpenJDK 21.0.12.1 (Homebrew)
@@ -81,7 +81,7 @@ Runtime: OpenJDK 21.0.12.1 (Homebrew)
 
 Focused security, authorization, ADMIN API, observability, rollback, and
 log-safety suites also passed. Final source/report scans and complete diff review
-are recorded in the Week 7 handoff.
+were completed before handoff.
 
 ## Known limitations and future improvements
 
@@ -90,5 +90,4 @@ are recorded in the Week 7 handoff.
   storage, and external secret management are not implemented.
 - JWT is intentionally deferred until the required Week 7 HTTP Basic exercises
   are accepted; an external identity provider is preferable for production.
-- Commit, push, and pull-request creation have not been performed and still
-  require explicit user authorization.
+- The current review-cleanup changes remain uncommitted and unpushed.

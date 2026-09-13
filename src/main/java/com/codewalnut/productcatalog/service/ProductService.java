@@ -112,7 +112,6 @@ public class ProductService {
         if (productRepository.existsBySkuIgnoreCaseAndIdNot(request.getSku(), id)) {
             throw new DuplicateSkuException(request.getSku());
         }
-        assertExpectedVersion(entity, request.getVersion(), id);
         productEntityMapper.applyUpdate(entity, request);
         ProductEntity saved = productPersistenceSupport.saveAndFlush(entity, request.getSku());
         return productEntityMapper.toResponse(saved);
@@ -146,7 +145,6 @@ public class ProductService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @Transactional
     public void delete(UUID id) {
         if (!productRepository.existsById(id)) {
             throw new ProductNotFoundException(id);

@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "springdoc.api-docs.enabled=true")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @WithMockUser(username = "controller-admin", roles = "ADMIN")
@@ -51,6 +51,13 @@ class ProductControllerTest extends PostgreSqlTestSupport {
     @BeforeEach
     void clearProducts() {
         productRepository.deleteAll();
+    }
+
+    @Test
+    void givenOpenApiSchema_whenInspectingProductRequest_thenVersionIsNotAdvertised() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.schemas.ProductRequest.properties.version").doesNotExist());
     }
 
     @Test
@@ -269,22 +276,17 @@ class ProductControllerTest extends PostgreSqlTestSupport {
     }
 
     @Test
-    void givenStaleVersion_whenUpdatingProduct_thenReturns409() throws Exception {
+    void givenLegacyVersionField_whenUpdatingProduct_thenIgnoresItAndReturns200() throws Exception {
         String id = createProduct("SKU-VERSION");
-        MvcResult current = mockMvc.perform(get("/api/products/{id}", id))
-                .andExpect(status().isOk())
-                .andReturn();
-        long currentVersion = objectMapper.readTree(current.getResponse().getContentAsString())
-                .get("version")
-                .asLong();
-        ObjectNode staleUpdate = objectMapper.valueToTree(validRequest("SKU-VERSION"));
-        staleUpdate.put("version", currentVersion + 1);
+        ObjectNode update = objectMapper.valueToTree(validRequest("SKU-VERSION-UPDATED"));
+        update.put("version", 999);
 
         mockMvc.perform(put("/api/products/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(staleUpdate)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value(409));
+                        .content(objectMapper.writeValueAsString(update)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.sku").value("SKU-VERSION-UPDATED"));
     }
 
     @Test

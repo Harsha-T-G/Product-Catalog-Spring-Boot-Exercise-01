@@ -1,8 +1,6 @@
 # Security Contract Specification
 
 **Status:** Approved on 2026-09-09
-**Module id:** `security-contract`
-**Capability map:** [`WEEK7_CAPABILITY_MAP.md`](../WEEK7_CAPABILITY_MAP.md)
 **Baseline:** Week 6 PostgreSQL Product Catalog
 **Requirements source:** Week 7 Spring Security, logging, debugging, and error-handling exercise brief
 
@@ -177,6 +175,20 @@ Security behavior shall be implemented one access rule at a time. The first
 production change must be preceded by a failing HTTP test proving that an
 unauthenticated request to `GET /api/products` receives 401. Actual RED and
 GREEN commands and outputs must be recorded in `docs/tdd-evidence.md`.
+
+### Remaining Week 7 exercise coverage
+
+The exercise brief supplies the detailed requirements. These ranges keep the
+implementation plan traceable without duplicating that brief across additional
+specification files.
+
+| Requirement and acceptance ranges | Exercise area |
+| --- | --- |
+| REQ-121–REQ-129 / AC-121–AC-127 | PostgreSQL-backed users and roles, BCrypt authentication, disabled users, and safe development seeding |
+| REQ-130–REQ-137 / AC-130–AC-136 | Request- and method-level role authorization with restrictive defaults |
+| REQ-140–REQ-149 / AC-140–AC-147 | ADMIN user creation and enabled-state management with safe responses |
+| REQ-150–REQ-163 / AC-150–AC-160 | Trace IDs, consistent security errors, safe request/application logging, and debugging notes |
+| REQ-170–REQ-178 / AC-170–AC-175 | Integration coverage, TDD evidence, README/API examples, self-review, and delivery verification |
 
 ## Error contract
 

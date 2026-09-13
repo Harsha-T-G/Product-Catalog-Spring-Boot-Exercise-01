@@ -53,13 +53,14 @@ found. Missing product handling is defined in chunk 03/04.
 ### REQ-015: Update product
 
 `PUT /api/products/{id}` shall replace editable fields, preserve id from path,
-return HTTP 200 with updated `ProductResponse`. When the request body includes
-`version`, it must match the persisted row or the API returns HTTP 409.
+and return HTTP 200 with updated `ProductResponse`. POST and PUT request bodies
+shall not expose or enforce a client-supplied product version.
 
 ### REQ-016: Delete product
 
 `DELETE /api/products/{id}` shall remove the product and return HTTP 204 with no
-body.
+body. ADMIN method authorization remains on the service operation; the repository
+owns the delete transaction.
 
 ### REQ-017: Separation of concerns
 
