@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -39,6 +40,7 @@ class ProductServiceIntegrationTest extends PostgreSqlTestSupport {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void givenValidRequest_whenCreateUpdateAndDelete_thenPersistsExpectedState() {
         // Arrange
         ProductRequest createRequest = validRequest("SVC-001");

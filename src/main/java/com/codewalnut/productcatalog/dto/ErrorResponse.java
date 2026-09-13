@@ -14,7 +14,7 @@ public class ErrorResponse {
     private final String message;
     private final String path;
     private final List<FieldErrorDetail> fieldErrors;
-    private final String errorReferenceId;
+    private final String traceId;
 
     public ErrorResponse(
             Instant timestamp,
@@ -33,13 +33,13 @@ public class ErrorResponse {
             String message,
             String path,
             List<FieldErrorDetail> fieldErrors,
-            String errorReferenceId) {
+            String traceId) {
         this.timestamp = timestamp;
         this.status = status;
         this.error = error;
         this.message = message;
         this.path = path;
         this.fieldErrors = fieldErrors == null ? List.of() : List.copyOf(fieldErrors);
-        this.errorReferenceId = errorReferenceId;
+        this.traceId = traceId;
     }
 }

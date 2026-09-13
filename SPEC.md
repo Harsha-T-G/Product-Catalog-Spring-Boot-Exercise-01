@@ -1,8 +1,8 @@
 # Product Catalog Product Specification
 
-**Status:** Approved — Week 6 (PostgreSQL persistence) implemented on branch `week6-exercise-6-docs-delivery`  
+**Status:** Week 6 approved baseline; Week 7 PLAN-W7-01 through PLAN-W7-07 implemented
 **Stack:** Java 21, Spring Boot 3.4.x, Maven, PostgreSQL 16, Flyway, Spring Data JPA, JUnit 5, Mockito, Testcontainers  
-**Exercise source:** Week 5 fundamentals + Week 6 PostgreSQL exercises
+**Exercise source:** Week 5 fundamentals + Week 6 PostgreSQL exercises + Week 7 Spring Security and logging brief
 
 ## Assumptions
 
@@ -28,8 +28,8 @@
     locally), not committed configuration files.
 12. Java 21 is the release target.
 13. API base path remains `/api/products` (no `/api/v1` in this exercise).
-14. Optional `version` on update/stock requests enables optimistic-lock
-    preconditions; omitting `version` allows last-write-wins on PUT.
+14. Product `version` is server-managed and returned in responses. POST and PUT
+    do not expose it; stock PATCH may optionally use it as a precondition.
 
 ## Objective
 
@@ -52,9 +52,10 @@ optimistic locking, and Testcontainers-backed automated testing.
 - Actuator health and info endpoints (limited exposure)
 - README, curl/Postman samples, and self-review deliverables
 
-### Out of scope
+### Week 6 baseline exclusions
 
-- Authentication, authorization, rate limiting, or multi-tenancy
+- Authentication and authorization until the Week 7 contracts are approved
+- Rate limiting or multi-tenancy
 - `/api/v1` versioning (exercise contract uses `/api/products`)
 - Production deployment, CI pipelines (initial agentic setup)
 - Logging sensitive data (passwords, tokens, full request bodies)
@@ -93,6 +94,13 @@ Package layout under `com.codewalnut.productcatalog`:
 | [05-configuration.md](docs/specs/product-catalog/05-configuration.md) | Profiles, limits, low-stock | REQ-070–REQ-080 |
 | [06-testing-health.md](docs/specs/product-catalog/06-testing-health.md) | Tests, Actuator, deliverables | REQ-090–REQ-100 |
 
+### Week 7 contract
+
+The focused [security contract](docs/security-spec.md) defines the Week 7 role,
+endpoint, authentication, error, sensitive-data, and test-first boundaries. The
+exercise brief remains the detailed source for database authentication, user
+management, logging, debugging, integration tests, and required deliverables.
+
 ## Product data model
 
 | Field | Type | Rules |
@@ -104,7 +112,7 @@ Package layout under `com.codewalnut.productcatalog`:
 | price | BigDecimal | Required; > 0; max 17 integer + 2 fraction digits |
 | stockQuantity | int | >= 0 |
 | active | boolean | Stored and returned as provided |
-| version | long | Optimistic lock; returned on GET; optional on PUT/PATCH stock |
+| version | long | Server-managed; returned in responses; optional only on stock PATCH |
 | createdAt / updatedAt | Instant | Server-managed timestamps |
 
 ## Open questions (resolved)
@@ -123,3 +131,48 @@ Package layout under `com.codewalnut.productcatalog`:
 - [x] Contract index complete
 - [x] Open questions resolved
 - [x] **Spec approved — Week 6 implementation matches this document**
+
+### Week 7 `security-contract` approval
+
+- [x] Assumptions and proposed security decisions reviewed
+- [x] Role and endpoint access matrix approved
+- [x] Security status/error behavior approved
+- [x] Sensitive-data and test-first boundaries approved
+- [x] **`security-contract` approved on 2026-09-09 — planning may begin**
+
+### Week 7 `database-authentication` approval
+
+- [x] Identity schema and case-insensitive username behavior approved
+- [x] BCrypt, disabled-user, and non-revealing failure behavior approved
+- [x] Environment-only development seeding approved
+- [x] **`database-authentication` approved under standing user approval on 2026-09-09**
+
+### Week 7 `role-authorization` approval
+
+- [x] Request matcher precedence and explicit role lists approved
+- [x] Restrictive default and protected operational endpoints approved
+- [x] Product deletion defense-in-depth boundary approved
+- [x] **`role-authorization` approved under standing user approval on 2026-09-09**
+
+### Week 7 `admin-user-management` approval
+
+- [x] Create/enable DTO, validation, and response contract approved
+- [x] Duplicate, missing-user, and self-disable statuses approved
+- [x] Password-safe and immediate authentication behavior approved
+- [x] **`admin-user-management` approved under standing user approval on 2026-09-09**
+- [x] BCrypt 72-byte validation clarification approved on 2026-09-10
+
+### Week 7 `request-observability` approval
+
+- [x] Trace-ID validation, replacement, propagation, and cleanup approved
+- [x] Request, security, domain-event, and level policy approved
+- [x] Shared trace-aware application/security error envelope approved
+- [x] Debugging evidence and sensitive-output policy approved
+- [x] **`request-observability` approved under standing user approval on 2026-09-09**
+
+### Week 7 `security-verification-delivery` approval
+
+- [x] Complete public-boundary integration matrix approved
+- [x] TDD, README, safe-example, and self-review deliverables approved
+- [x] Java runtime and Git authorization limitations must be reported truthfully
+- [x] **`security-verification-delivery` approved under standing user approval on 2026-09-10**

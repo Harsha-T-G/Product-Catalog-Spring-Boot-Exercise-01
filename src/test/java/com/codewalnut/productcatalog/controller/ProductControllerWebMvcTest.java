@@ -5,6 +5,7 @@ import com.codewalnut.productcatalog.dto.ProductResponse;
 import com.codewalnut.productcatalog.dto.StockAdjustmentRequest;
 import com.codewalnut.productcatalog.entity.ProductEntity;
 import com.codewalnut.productcatalog.exception.GlobalExceptionHandler;
+import com.codewalnut.productcatalog.exception.ErrorResponseFactory;
 import com.codewalnut.productcatalog.exception.ProductLimitReachedException;
 import com.codewalnut.productcatalog.service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +45,7 @@ class ProductControllerWebMvcTest {
     void setUp() {
         ProductController controller = new ProductController(productService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(new ErrorResponseFactory()))
                 .build();
     }
 
@@ -52,7 +53,8 @@ class ProductControllerWebMvcTest {
     void givenValidRequest_whenCreateProduct_thenReturns201WithLocationHeader() throws Exception {
         UUID id = UUID.randomUUID();
         when(productService.create(any(ProductRequest.class))).thenReturn(
-                new ProductResponse(id, "SKU-001", "Sample", "General", new BigDecimal("19.99"), 10, true, null, null));
+                new ProductResponse(
+                        id, "SKU-001", "Sample", "General", new BigDecimal("19.99"), 10, true, 0L, null, null));
 
         mockMvc.perform(post("/api/products")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -16,6 +16,7 @@ public class ProductResponse {
     BigDecimal price;
     int stockQuantity;
     boolean active;
+    Long version;
     Instant createdAt;
     Instant updatedAt;
 }

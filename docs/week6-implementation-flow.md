@@ -267,7 +267,7 @@ com.codewalnut.productcatalog/
 | POST | `/api/products` | 201 | Creates product; `Location` header |
 | GET | `/api/products` | 200 | Page envelope; filter/sort query params |
 | GET | `/api/products/{id}` | 200 | Single product |
-| PUT | `/api/products/{id}` | 200 | Full update; optional `version` → 409 |
+| PUT | `/api/products/{id}` | 200 | Full update; no client version precondition |
 | PATCH | `/api/products/{id}/stock` | 200 | `{ "adjustment": ±n }`; optional `version` |
 | DELETE | `/api/products/{id}` | 204 | Remove product |
 | GET | `/api/products/low-stock` | 200 | JSON array of active low-stock items |
@@ -352,7 +352,7 @@ curl http://localhost:8080/actuator/health
 Documented honestly in `SELF_REVIEW.md` and `reviews/pr-9/AZ-REVIEW.md`:
 
 - **Catalog max products** — `count()` guard is best-effort under concurrent creates (no SERIALIZABLE).
-- **PUT without version** — last-write-wins; pass `version` in body to get 409 on stale updates.
+- **PUT updates** — last-write-wins; the request does not expose the server-managed `version`.
 - **No `/api/v1`, no Spring Security** — out of Week 6 exercise scope.
 - **Week 5 breaking change** — list endpoint returns a page envelope, not a bare array.
 

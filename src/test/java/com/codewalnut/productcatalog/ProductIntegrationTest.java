@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -31,10 +32,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@WithMockUser(username = "integration-admin", roles = "ADMIN")
 class ProductIntegrationTest extends PostgreSqlTestSupport {
 
     @Autowired
@@ -164,7 +167,13 @@ class ProductIntegrationTest extends PostgreSqlTestSupport {
     void givenConcurrentStockPatches_whenOptimisticLockLost_thenReturns409() throws Exception {
         // Arrange
         String id = createProduct("LOCK-409");
-        Map<String, Object> payload = Map.of("adjustment", 1);
+        MvcResult current = mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isOk())
+                .andReturn();
+        long startingVersion = objectMapper.readTree(current.getResponse().getContentAsString())
+                .get("version")
+                .asLong();
+        Map<String, Object> payload = Map.of("adjustment", 1, "version", startingVersion);
         String body = objectMapper.writeValueAsString(payload);
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
@@ -174,6 +183,7 @@ class ProductIntegrationTest extends PostgreSqlTestSupport {
             ready.countDown();
             start.await();
             return mockMvc.perform(patch("/api/products/{id}/stock", id)
+                            .with(user("integration-admin").roles("ADMIN"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andReturn()

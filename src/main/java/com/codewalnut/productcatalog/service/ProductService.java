@@ -15,10 +15,14 @@ import com.codewalnut.productcatalog.exception.ProductNotFoundException;
 import com.codewalnut.productcatalog.mapper.ProductEntityMapper;
 import com.codewalnut.productcatalog.repository.ProductRepository;
 import com.codewalnut.productcatalog.repository.ProductSpecifications;
+import com.codewalnut.productcatalog.security.SafeLogValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,8 @@ import java.util.UUID;
 
 @Service
 public class ProductService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProductService.class);
 
     private final ProductRepository productRepository;
     private final ProductEntityMapper productEntityMapper;
@@ -58,7 +64,12 @@ public class ProductService {
         UUID id = UUID.randomUUID();
         ProductEntity entity = productEntityMapper.toNewEntity(id, request);
         ProductEntity saved = productPersistenceSupport.saveAndFlush(entity, request.getSku());
-        return productEntityMapper.toResponse(saved);
+        ProductResponse response = productEntityMapper.toResponse(saved);
+        log.info(
+                "event=product_created productId={} sku={} outcome=success",
+                saved.getId(),
+                SafeLogValue.of(saved.getSku()));
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -124,9 +135,16 @@ public class ProductService {
 
         entity.adjustStockBy(adjustment);
         ProductEntity saved = productPersistenceSupport.saveAndFlush(entity);
-        return productEntityMapper.toResponse(saved);
+        ProductResponse response = productEntityMapper.toResponse(saved);
+        log.info(
+                "event=stock_adjusted productId={} adjustment={} stockQuantity={} outcome=success",
+                saved.getId(),
+                adjustment,
+                saved.getStockQuantity());
+        return response;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(UUID id) {
         if (!productRepository.existsById(id)) {
             throw new ProductNotFoundException(id);

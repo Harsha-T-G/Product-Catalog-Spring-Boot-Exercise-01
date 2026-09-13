@@ -2,6 +2,7 @@ package com.codewalnut.productcatalog.exception;
 
 import com.codewalnut.productcatalog.dto.ErrorResponse;
 import com.codewalnut.productcatalog.dto.FieldErrorDetail;
+import com.codewalnut.productcatalog.security.SafeLogValue;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +18,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private final ErrorResponseFactory errorResponseFactory;
+
+    public GlobalExceptionHandler(ErrorResponseFactory errorResponseFactory) {
+        this.errorResponseFactory = errorResponseFactory;
+    }
 
     @ExceptionHandler(ProductNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleProductNotFound(
@@ -32,7 +36,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.NOT_FOUND,
                 exception.getMessage(),
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -42,7 +46,27 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.CONFLICT,
                 exception.getMessage(),
-                request.getRequestURI(),
+                request,
+                null);
+    }
+
+    @ExceptionHandler(AppUserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAppUserNotFound(
+            AppUserNotFoundException exception, HttpServletRequest request) {
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage(),
+                request,
+                null);
+    }
+
+    @ExceptionHandler({DuplicateUsernameException.class, SelfDisableNotAllowedException.class})
+    public ResponseEntity<ErrorResponse> handleUserConflict(
+            RuntimeException exception, HttpServletRequest request) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                request,
                 null);
     }
 
@@ -52,7 +76,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.CONFLICT,
                 exception.getMessage(),
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -62,7 +86,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.CONFLICT,
                 "A database constraint was violated",
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -72,7 +96,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.CONFLICT,
                 "Product was updated by another transaction",
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -82,7 +106,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 exception.getMessage(),
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -92,7 +116,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 exception.getMessage(),
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -102,7 +126,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 exception.getMessage(),
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -112,7 +136,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 exception.getMessage(),
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -122,7 +146,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 exception.getMessage(),
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -135,7 +159,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 "Validation failed",
-                request.getRequestURI(),
+                request,
                 fieldErrors);
     }
 
@@ -145,7 +169,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 "Malformed request body",
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -153,7 +177,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTypeMismatch(
             MethodArgumentTypeMismatchException exception, HttpServletRequest request) {
         String message = "Invalid value for parameter '" + exception.getName() + "'";
-        return buildResponse(HttpStatus.BAD_REQUEST, message, request.getRequestURI(), null);
+        return buildResponse(HttpStatus.BAD_REQUEST, message, request, null);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -162,7 +186,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.METHOD_NOT_ALLOWED,
                 exception.getMessage(),
-                request.getRequestURI(),
+                request,
                 null);
     }
 
@@ -172,49 +196,31 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.NOT_FOUND,
                 exception.getMessage(),
-                request.getRequestURI(),
+                request,
                 null);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request) {
-        final String errorReferenceId = UUID.randomUUID().toString();
+        String traceId = errorResponseFactory.currentTraceId(request);
         log.error(
-                "Unhandled exception [errorReferenceId={}, path={}, exceptionType={}]",
-                errorReferenceId,
-                request.getRequestURI(),
-                exception.getClass().getName(),
-                exception);
+                "event=unexpected_failure traceId={} path={} exceptionType={}",
+                traceId,
+                SafeLogValue.of(request.getRequestURI()),
+                exception.getClass().getName());
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred",
-                request.getRequestURI(),
-                null,
-                errorReferenceId);
+                request,
+                null);
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(
             HttpStatus status,
             String message,
-            String path,
+            HttpServletRequest request,
             List<FieldErrorDetail> fieldErrors) {
-        return buildResponse(status, message, path, fieldErrors, null);
-    }
-
-    private ResponseEntity<ErrorResponse> buildResponse(
-            HttpStatus status,
-            String message,
-            String path,
-            List<FieldErrorDetail> fieldErrors,
-            String errorReferenceId) {
-        ErrorResponse body = new ErrorResponse(
-                Instant.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                message,
-                path,
-                fieldErrors,
-                errorReferenceId);
+        ErrorResponse body = errorResponseFactory.create(status, message, request, fieldErrors);
         return ResponseEntity.status(status).body(body);
     }
 }

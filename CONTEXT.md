@@ -41,7 +41,19 @@ once approved.
 - **Controller** — HTTP adapter only. Validates request shape via Bean
   Validation, maps HTTP status and headers, and delegates to the service.
 - **Error response** — consistent JSON envelope for all API failures: timestamp,
-  status, error, message, path, and optional field-level validation errors.
+  status, error, message, path, trace ID, and a field-level validation error list.
+- **Application user** — database identity used by HTTP Basic authentication.
+  A user has a UUID, case-insensitive username identity, BCrypt password hash,
+  enabled flag, creation timestamp, and one or more roles. It is not a REST
+  response model.
+- **Role** — one canonical database permission group: `VIEWER`, `EDITOR`, or
+  `ADMIN`. Spring Security exposes these as `ROLE_VIEWER`, `ROLE_EDITOR`, and
+  `ROLE_ADMIN` authorities.
+- **Password hash** — one-way BCrypt output stored for an application user.
+  Authentication compares a submitted password to this value; it is never
+  decoded, returned, or logged.
+- **Disabled user** — an application user whose persisted `enabled` flag is
+  false. The identity remains stored but cannot authenticate.
 
 ## Important non-equivalences
 
@@ -54,6 +66,10 @@ once approved.
   values through public API endpoints unless safe for clients.
 - Actuator health reflects application readiness; `/api/info` status is
   application metadata for the exercise, not a substitute for Actuator health.
+- Username identity is case-insensitive; retained username spelling is display
+  data, not a separate account.
+- A role is an authorization assignment, not an authenticated user and not a
+  password-storage record.
 
 ## Exercise branch checkpoints
 
